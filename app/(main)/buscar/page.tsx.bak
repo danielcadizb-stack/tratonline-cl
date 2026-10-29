@@ -1,0 +1,204 @@
+﻿'use client'
+
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { formatCLP } from '@/lib/autofact'
+
+const MARCAS_OPC = ['Toyota', 'Mazda', 'Kia', 'Hyundai', 'Chevrolet',
+  'Nissan', 'Honda', 'Mitsubishi', 'Ford', 'Suzuki',
+  'Volkswagen', 'Subaru', 'Otra']
+const TIPOS_OPC  = ['sedan', 'suv', 'hatchback', 'camioneta', 'otro']
+const REGIONES   = ['Las Condes', 'Providencia', 'Ã‘uÃ±oa', 'Vitacura',
+  'MaipÃº', 'Santiago Centro', 'Quilicura', 'Puente Alto',
+  'La Florida', 'Cualquier comuna RM']
+
+export default function BuscarPage() {
+  const router = useRouter()
+  const [loading, setLoading]     = useState(false)
+  const [error, setError]         = useState('')
+  const [cargando, setCargando]   = useState(true)
+  const [perfilExistente, setPerfilExistente] = useState<any>(null)
+
+  const [marcas, setMarcas]           = useState<string[]>([])
+  const [tipos, setTipos]             = useState<string[]>([])
+  const [anioMin, setAnioMin]         = useState('2018')
+  const [anioMax, setAnioMax]         = useState(String(new Date().getFullYear()))
+  const [kmMax, setKmMax]             = useState('80000')
+  const [presupuesto, setPresupuesto] = useState('')
+  const [transmision, setTransmision] = useState('cualquiera')
+  const [combustible, setCombustible] = useState('cualquiera')
+  const [region, setRegion]           = useState('')
+  const [urgencia, setUrgencia]       = useState('flexible')
+
+  useEffect(() => {
+    fetch('/api/perfiles')
+      .then(r => r.json())
+      .then(({ perfil }) => {
+        if (perfil) {
+          setPerfilExistente(perfil)
+          setMarcas(perfil.marcas || [])
+          setTipos(perfil.tipos || [])
+          setAnioMin(String(perfil.anio_min))
+          setAnioMax(String(perfil.anio_max))
+          setKmMax(String(perfil.km_max))
+          setPresupuesto(String(perfil.presupuesto))
+          setTransmision(perfil.transmision)
+          setCombustible(perfil.combustible)
+          setRegion(perfil.region)
+          setUrgencia(perfil.urgencia)
+        }
+      })
+      .finally(() => setCargando(false))
+  }, [])
+
+  function toggleMarca(m: string) {
+    setMarcas(prev => prev.includes(m)
+      ? prev.filter(x => x !== m) : [...prev, m])
+  }
+
+  function toggleTipo(t: string) {
+    setTipos(prev => prev.includes(t)
+      ? prev.filter(x => x !== t) : [...prev, t])
+  }
+
+  async function handleGuardar() {
+    if (!presupuesto || !region) {
+      setError('Debes indicar tu presupuesto y zona de bÃºsqueda.')
+      return
+    }
+    setLoading(true)
+    setError('')
+    try {
+      const res = await fetch('/api/perfiles', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          marcas, tipos,
+          anio_min:    Number(anioMin),
+          anio_max:    Number(anioMax),
+          km_max:      Number(kmMax),
+          presupuesto: Number(presupuesto),
+          transmision, combustible, region, urgencia,
+        }),
+      })
+      if (!res.ok) throw new Error('Error al guardar perfil')
+      router.push('/matches?perfil=nuevo')
+    } catch (e: any) {
+      setError(e.message)
+      setLoading(false)
+    }
+  }
+
+  if (cargando) {
+    return (
+      <div className="max-w-lg mx-auto space-y-4">
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="h-12 bg-trato-gray1 rounded-xl animate-pulse" />
+        ))}
+      </div>
+    )
+  }
+
+  return (
+    <div className="max-w-lg mx-auto">
+      <div className="mb-6">
+        <h1 className="text-xl font-semibold text-trato-text">
+          {perfilExistente ? 'Actualizar bÃºsqueda' : 'Definir quÃ© busco'}
+        </h1>
+        <p className="text-trato-text2 text-sm mt-1">
+          Te avisamos apenas aparezca un auto que calce con tu perfil
+        </p>
+      </div>
+
+      <div className="space-y-6">
+
+        <div>
+          <label className="section-label">
+            Marcas de interÃ©s
+            <span className="normal-case font-normal text-trato-gray3 ml-1">
+              (ninguna = cualquiera)
+            </span>
+          </label>
+          <div className="flex flex-wrap gap-2 mt-2">
+            {MARCAS_OPC.map(m => (
+              <button key={m} type="button" onClick={() => toggleMarca(m)}
+                className={`tag-filter ${marcas.includes(m) ? 'active' : ''}`}>
+                {m}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <label className="section-label">
+            Tipo de auto
+            <span className="normal-case font-normal text-trato-gray3 ml-1">
+              (ninguno = cualquiera)
+            </span>
+          </label>
+          <div className="flex flex-wrap gap-2 mt-2">
+            {TIPOS_OPC.map(t => (
+              <button key={t} type="button" onClick={() => toggleTipo(t)}
+                className={`tag-filter capitalize ${tipos.includes(t) ? 'active' : ''}`}>
+                {t}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <label className="section-label">Rango de aÃ±o</label>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-trato-text2 text-xs mb-1 block">Desde</label>
+              <input type="number" value={anioMin}
+                onChange={e => setAnioMin(e.target.value)}
+                min="2000" max={anioMax} className="input-trato" />
+            </div>
+            <div>
+              <label className="text-trato-text2 text-xs mb-1 block">Hasta</label>
+              <input type="number" value={anioMax}
+                onChange={e => setAnioMax(e.target.value)}
+                min={anioMin} max={new Date().getFullYear()}
+                className="input-trato" />
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label className="section-label">Kilometraje mÃ¡ximo</label>
+          <div className="flex gap-2 flex-wrap mt-2">
+            {['50000','80000','100000','150000','200000'].map(k => (
+              <button key={k} type="button" onClick={() => setKmMax(k)}
+                className={`tag-filter ${kmMax === k ? 'active' : ''}`}>
+                {Number(k).toLocaleString('es-CL')} km
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <label className="section-label">Presupuesto mÃ¡ximo (CLP)</label>
+          <input type="number" value={presupuesto}
+            onChange={e => setPresupuesto(e.target.value)}
+            placeholder="10000000" min="0" step="500000"
+            className="input-trato text-base font-semibold" />
+          {presupuesto && (
+            <p className="text-trato-green text-[10px] mt-1 font-medium">
+              {formatCLP(Number(presupuesto))}
+            </p>
+          )}
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="section-label">TransmisiÃ³n</label>
+            <div className="flex flex-col gap-1 mt-2">
+              {['cualquiera','automatico','manual'].map(t => (
+                <button key={t} type="button"
+                  onClick={() => setTransmision(t)}
+                  className={`tag-filter text-left
+                    ${transmision === t ? 'active' : ''}`}>
+                  {t === 'cualquiera' ? 'Cualquiera'
+                  : t === 'automatico' ? 'AutomÃ¡tico' :
+                  
