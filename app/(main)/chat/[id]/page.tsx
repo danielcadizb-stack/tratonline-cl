@@ -18,7 +18,6 @@ export default function ChatPage() {
   const [loading, setLoading] = useState(true);
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  // Obtener usuario actual
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) setUserId(user.id);
@@ -26,23 +25,20 @@ export default function ChatPage() {
     });
   }, []);
 
-  // Cargar match y mensajes
   useEffect(() => {
     if (!userId) return;
 
     async function cargar() {
-      // Cargar match con datos del auto
       const { data: matchData } = await supabase
         .from("matches")
         .select(
-          "*, auto:autos(*), comprador:usuarios!matches_comprador_id_fkey(nombre), vendedor:autos(vendedor_id)",
+          "*, auto:autos(*), comprador:usuarios!matches_comprador_id_fkey(nombre)",
         )
         .eq("id", matchId)
         .single();
 
       setMatch(matchData);
 
-      // Cargar mensajes
       const { data: msgs } = await supabase
         .from("mensajes")
         .select("*, autor:usuarios(nombre)")
@@ -56,7 +52,6 @@ export default function ChatPage() {
     cargar();
   }, [userId, matchId]);
 
-  // Suscripción Realtime — mensajes nuevos
   useEffect(() => {
     if (!userId) return;
 
@@ -81,7 +76,6 @@ export default function ChatPage() {
     };
   }, [userId, matchId]);
 
-  // Scroll al último mensaje
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [mensajes]);
@@ -127,10 +121,10 @@ export default function ChatPage() {
   }
 
   const auto = match.auto;
+  const esComprador = userId === match.comprador_id;
 
   return (
     <div className="max-w-2xl mx-auto flex flex-col h-[calc(100vh-80px)]">
-      {/* Header del chat */}
       <div
         className="bg-trato-dark rounded-xl p-4 mb-4 flex items-center
         justify-between flex-shrink-0"
@@ -163,7 +157,6 @@ export default function ChatPage() {
         <span className="badge-green">Match activo</span>
       </div>
 
-      {/* Timeline de pasos */}
       <div className="bg-trato-gray1 rounded-xl p-3 mb-4 flex-shrink-0">
         <div className="flex items-center justify-between">
           {[
@@ -207,7 +200,6 @@ export default function ChatPage() {
         </div>
       </div>
 
-      {/* Mensajes */}
       <div className="flex-1 overflow-y-auto space-y-2 mb-4 px-1">
         {mensajes.length === 0 && (
           <div className="text-center py-8">
@@ -218,6 +210,20 @@ export default function ChatPage() {
         )}
         {mensajes.map((msg: any) => {
           const esMio = msg.autor_id === userId;
+          const esSistema = msg.tipo === "sistema";
+
+          if (esSistema)
+            return (
+              <div key={msg.id} className="text-center">
+                <span
+                  className="text-[10px] text-trato-text2 bg-trato-gray1
+                px-3 py-1 rounded-full border border-trato-border"
+                >
+                  {msg.texto}
+                </span>
+              </div>
+            );
+
           return (
             <div
               key={msg.id}
@@ -238,7 +244,8 @@ export default function ChatPage() {
                 )}
                 <p>{msg.texto}</p>
                 <p
-                  className={`text-[10px] mt-1 ${esMio ? "opacity-70" : "text-trato-gray3"}`}
+                  className={`text-[10px] mt-1
+                  ${esMio ? "opacity-70" : "text-trato-gray3"}`}
                 >
                   {new Date(msg.created_at).toLocaleTimeString("es-CL", {
                     hour: "2-digit",
@@ -252,7 +259,19 @@ export default function ChatPage() {
         <div ref={bottomRef} />
       </div>
 
-      {/* Input */}
+      {["aceptado_comprador", "aceptado_vendedor"].includes(match.estado) && (
+        <div className="flex-shrink-0 mb-2">
+          <button
+            onClick={() => router.push(`/inspeccion?match_id=${matchId}`)}
+            className="w-full bg-trato-amber-bg border border-trato-amber/30
+              text-trato-amber text-sm font-medium py-2.5 rounded-[9px]
+              hover:bg-trato-amber/10 transition-colors"
+          >
+            Solicitar inspeccion mecanica antes de visitar
+          </button>
+        </div>
+      )}
+
       <div className="flex gap-2 flex-shrink-0">
         <input
           type="text"
