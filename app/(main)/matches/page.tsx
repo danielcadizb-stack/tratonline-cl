@@ -23,7 +23,7 @@ const ESTADO_LABEL: Record<string, { label: string; color: string }> = {
 export default async function MatchesPage({
   searchParams,
 }: {
-  searchParams: { nuevo?: string; perfil?: string };
+  searchParams: { nuevo?: string; perfil?: string; cobro?: string };
 }) {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
@@ -42,7 +42,9 @@ export default async function MatchesPage({
     if (autoIds.length > 0) {
       const { data } = await supabase
         .from("matches")
-        .select("*, auto:autos(*), comprador:usuarios(nombre, telefono)")
+        .select(
+          "*, auto:autos(*), comprador:usuarios!matches_comprador_id_fkey(nombre, telefono)",
+        )
         .in("auto_id", autoIds)
         .neq("estado", "cancelado")
         .order("created_at", { ascending: false });
@@ -60,6 +62,36 @@ export default async function MatchesPage({
 
   return (
     <div className="max-w-2xl mx-auto">
+      {searchParams.cobro === "ok" && (
+        <div
+          className="bg-trato-green-bg border border-trato-green/20
+          rounded-xl p-4 mb-6 flex items-center gap-3"
+        >
+          <div
+            className="w-8 h-8 rounded-full bg-trato-green flex items-center
+            justify-center flex-shrink-0"
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path
+                d="M2 7l3.5 3.5L12 3"
+                stroke="white"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+          <div>
+            <p className="text-trato-green font-medium text-sm">
+              Pago procesado correctamente
+            </p>
+            <p className="text-trato-green/70 text-xs">
+              La venta quedo registrada. Procede a la transferencia en Autofact.
+            </p>
+          </div>
+        </div>
+      )}
+
       {searchParams.nuevo && (
         <div
           className="bg-trato-green-bg border border-trato-green/20
@@ -181,7 +213,8 @@ export default async function MatchesPage({
           <Link
             href={user.rol === "vendedor" ? "/publicar" : "/buscar"}
             className="inline-block bg-trato-green text-white px-6 py-2.5
-              rounded-[9px] text-sm font-medium hover:bg-trato-green-l transition-colors"
+              rounded-[9px] text-sm font-medium hover:bg-trato-green-l
+              transition-colors"
           >
             {user.rol === "vendedor" ? "Publicar mi auto" : "Definir que busco"}
           </Link>
@@ -201,6 +234,14 @@ export default async function MatchesPage({
             "visita_agendada",
             "inspeccion_solicitada",
           ].includes(match.estado);
+          const puedeConfirmar =
+            user.rol === "vendedor" &&
+            [
+              "aceptado_comprador",
+              "aceptado_vendedor",
+              "visita_agendada",
+              "inspeccion_solicitada",
+            ].includes(match.estado);
 
           return (
             <div
@@ -236,7 +277,7 @@ export default async function MatchesPage({
                 className="flex items-center justify-between border-t
                 border-trato-border pt-3"
               >
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   {estadoInfo.color && (
                     <span className={estadoInfo.color}>{estadoInfo.label}</span>
                   )}
@@ -256,7 +297,8 @@ export default async function MatchesPage({
                         <button
                           type="submit"
                           className="bg-trato-green text-white text-xs px-3 py-1.5
-                          rounded-lg font-medium hover:bg-trato-green-l transition-colors"
+                          rounded-lg font-medium hover:bg-trato-green-l
+                          transition-colors"
                         >
                           Me interesa
                         </button>
@@ -265,9 +307,20 @@ export default async function MatchesPage({
                   {puedeChat && (
                     <Link
                       href={`/chat/${match.id}`}
-                      className="text-trato-green text-xs font-medium hover:underline"
+                      className="text-trato-green text-xs font-medium
+                        hover:underline"
                     >
                       Abrir chat
+                    </Link>
+                  )}
+                  {puedeConfirmar && (
+                    <Link
+                      href={`/confirmar-venta?match_id=${match.id}`}
+                      className="bg-trato-dark text-white text-xs px-3 py-1.5
+                        rounded-lg font-medium hover:bg-trato-mid
+                        transition-colors"
+                    >
+                      Confirmar venta
                     </Link>
                   )}
                 </div>
