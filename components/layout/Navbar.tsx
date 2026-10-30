@@ -8,6 +8,8 @@ import type { UserRole } from "@/types";
 interface NavbarProps {
   userName?: string;
   userRole?: UserRole;
+  userEmail?: string;
+  esAdmin?: boolean;
 }
 
 const NAV_LINKS: Record<UserRole, { href: string; label: string }[]> = {
@@ -16,13 +18,18 @@ const NAV_LINKS: Record<UserRole, { href: string; label: string }[]> = {
     { href: "/matches", label: "Mis matches" },
   ],
   comprador: [
-    { href: "/buscar", label: "Mi búsqueda" },
+    { href: "/buscar", label: "Mi busqueda" },
     { href: "/matches", label: "Mis matches" },
   ],
   mecanico: [{ href: "/inspeccion", label: "Inspecciones" }],
 };
 
-export function Navbar({ userName, userRole }: NavbarProps) {
+export function Navbar({
+  userName,
+  userRole,
+  userEmail,
+  esAdmin,
+}: NavbarProps) {
   const pathname = usePathname();
   const router = useRouter();
 
@@ -60,6 +67,19 @@ export function Navbar({ userName, userRole }: NavbarProps) {
               {link.label}
             </Link>
           ))}
+          {esAdmin && (
+            <Link
+              href="/admin"
+              className={`px-3 py-1.5 rounded-lg text-sm transition-colors
+                ${
+                  pathname === "/admin"
+                    ? "bg-trato-steel/50 text-white font-medium"
+                    : "text-trato-green-l hover:text-white hover:bg-trato-steel/20"
+                }`}
+            >
+              Admin
+            </Link>
+          )}
         </div>
 
         <div className="flex items-center gap-3">

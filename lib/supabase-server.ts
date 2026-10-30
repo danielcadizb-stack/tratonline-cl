@@ -31,9 +31,15 @@ export async function getCurrentUser() {
 
   const { data } = await supabase
     .from("usuarios")
-    .select("*")
+    .select("id, nombre, email, rol, activo, telefono, rut")
     .eq("id", user.id)
     .single();
 
-  return data;
+  if (!data) return null;
+
+  // Asegurar que el email siempre viene del auth si no está en la tabla
+  return {
+    ...data,
+    email: data.email || user.email || "",
+  };
 }
