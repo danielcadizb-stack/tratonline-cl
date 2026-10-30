@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 import type { UserRole } from "@/types";
@@ -45,11 +46,14 @@ export function Navbar({
   return (
     <nav className="bg-trato-dark border-b border-trato-steel/30 sticky top-0 z-40">
       <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
-        <Link
-          href="/matches"
-          className="text-xl font-bold text-white tracking-tight"
-        >
-          tratonline<span className="text-trato-green-l">.</span>
+        <Link href="/matches" className="flex items-center">
+          <Image
+            src="/logo.svg"
+            alt="TratOnline"
+            width={150}
+            height={34}
+            priority
+          />
         </Link>
 
         <div className="hidden sm:flex items-center gap-1">

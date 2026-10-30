@@ -1,0 +1,19 @@
+<svg width="160" height="36" viewBox="0 0 160 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Badge verde -->
+  <rect width="36" height="36" rx="10" fill="url(#grad)"/>
+  <!-- T estilizada -->
+  <path d="M10 11 L26 11" stroke="white" stroke-width="2.8" stroke-linecap="round"/>
+  <path d="M18 11 L18 25" stroke="white" stroke-width="2.8" stroke-linecap="round"/>
+  <!-- Nodo de conexión -->
+  <circle cx="25" cy="23" r="3" fill="white" opacity="0.95"/>
+  <path d="M18 23 L22 23" stroke="white" stroke-width="2" stroke-linecap="round"/>
+  <!-- Texto TratOnline -->
+  <text x="46" y="24" font-family="Inter, system-ui, sans-serif" font-size="20" font-weight="800" letter-spacing="-0.5" fill="white">Trat</text>
+  <text x="84" y="24" font-family="Inter, system-ui, sans-serif" font-size="20" font-weight="800" letter-spacing="-0.5" fill="#22A374">Online</text>
+  <defs>
+    <linearGradient id="grad" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#1A7F5A"/>
+      <stop offset="100%" stop-color="#22A374"/>
+    </linearGradient>
+  </defs>
+</svg>
