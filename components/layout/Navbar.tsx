@@ -49,7 +49,7 @@ export function Navbar({
           href="/matches"
           className="text-xl font-bold text-white tracking-tight"
         >
-          trato<span className="text-trato-green-l">.</span>
+          tratonline<span className="text-trato-green-l">.</span>
         </Link>
 
         <div className="hidden sm:flex items-center gap-1">

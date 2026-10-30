@@ -41,7 +41,7 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-white tracking-tight">
-            trato<span className="text-trato-green-l">.</span>
+            tratonline<span className="text-trato-green-l">.</span>
           </h1>
           <p className="text-trato-gray3 text-sm mt-2">Ingresa a tu cuenta</p>
         </div>

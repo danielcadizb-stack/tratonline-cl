@@ -89,7 +89,7 @@ export default function RegistroPage() {
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-white tracking-tight">
-            trato<span className="text-trato-green-l">.</span>
+            tratonline<span className="text-trato-green-l">.</span>
           </h1>
           <p className="text-trato-gray3 text-sm mt-2">Crear cuenta gratis</p>
         </div>
@@ -106,7 +106,7 @@ export default function RegistroPage() {
           {step === 1 && (
             <div>
               <p className="text-white font-medium text-sm mb-4">
-                ¿Para qué vas a usar Trato?
+                ¿Para qué vas a usar TratOnline?
               </p>
               <div className="space-y-3">
                 {ROLES.map((r) => (
