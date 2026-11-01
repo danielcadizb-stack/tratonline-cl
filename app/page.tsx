@@ -1,5 +1,5 @@
-﻿import Link from 'next/link'
-import Image from 'next/image'
+import Link from "next/link"
+import Image from "next/image"
 
 export default function LandingPage() {
   return (
@@ -28,9 +28,18 @@ export default function LandingPage() {
           <Link href="/registro" className="bg-trato-steel/30 text-white px-8 py-3.5 rounded-[10px] font-semibold text-sm border border-trato-steel/50 hover:bg-trato-steel/50 transition-colors">Buscar un auto</Link>
         </div>
         <div className="grid grid-cols-3 gap-4 max-w-sm mx-auto">
-          <div className="text-center"><p className="text-trato-green-l text-2xl font-bold"></p><p className="text-trato-gray3 text-xs mt-0.5">Para publicar</p></div>
-          <div className="text-center"><p className="text-trato-green-l text-2xl font-bold">48h</p><p className="text-trato-gray3 text-xs mt-0.5">Primer match</p></div>
-          <div className="text-center"><p className="text-trato-green-l text-2xl font-bold"></p><p className="text-trato-gray3 text-xs mt-0.5">Solo si vendes</p></div>
+          <div className="text-center">
+            <p className="text-trato-green-l text-2xl font-bold">Gratis</p>
+            <p className="text-trato-gray3 text-xs mt-0.5">Para publicar</p>
+          </div>
+          <div className="text-center">
+            <p className="text-trato-green-l text-2xl font-bold">48h</p>
+            <p className="text-trato-gray3 text-xs mt-0.5">Primer match</p>
+          </div>
+          <div className="text-center">
+            <p className="text-trato-green-l text-2xl font-bold">100K</p>
+            <p className="text-trato-gray3 text-xs mt-0.5">Solo si vendes</p>
+          </div>
         </div>
       </section>
       <section className="bg-trato-mid border-t border-trato-steel/30 py-16">
@@ -54,7 +63,7 @@ export default function LandingPage() {
               <div className="text-3xl mb-4">🤝</div>
               <div className="w-6 h-6 rounded-full bg-trato-green text-white text-xs font-bold flex items-center justify-center mx-auto mb-3">3</div>
               <h3 className="text-white font-semibold mb-2">Cierras el trato</h3>
-              <p className="text-trato-gray3 text-sm leading-relaxed">Chatean, coordinan la visita y la inspeccion mecanica. Pagas .000 solo cuando la venta se concreta.</p>
+              <p className="text-trato-gray3 text-sm leading-relaxed">Chatean, coordinan la visita y la inspeccion mecanica. Solo pagas cuando la venta se concreta.</p>
             </div>
           </div>
         </div>
