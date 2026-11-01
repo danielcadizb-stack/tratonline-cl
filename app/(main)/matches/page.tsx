@@ -28,6 +28,9 @@ export default async function MatchesPage({
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
+  // Mecánico va directo a su panel
+  if (user.rol === "mecanico") redirect("/panel-mecanico");
+
   const supabase = await createServerClientInstance();
   let matches: any[] = [];
 
@@ -213,8 +216,7 @@ export default async function MatchesPage({
           <Link
             href={user.rol === "vendedor" ? "/publicar" : "/buscar"}
             className="inline-block bg-trato-green text-white px-6 py-2.5
-              rounded-[9px] text-sm font-medium hover:bg-trato-green-l
-              transition-colors"
+              rounded-[9px] text-sm font-medium hover:bg-trato-green-l transition-colors"
           >
             {user.rol === "vendedor" ? "Publicar mi auto" : "Definir que busco"}
           </Link>
@@ -297,8 +299,7 @@ export default async function MatchesPage({
                         <button
                           type="submit"
                           className="bg-trato-green text-white text-xs px-3 py-1.5
-                          rounded-lg font-medium hover:bg-trato-green-l
-                          transition-colors"
+                          rounded-lg font-medium hover:bg-trato-green-l transition-colors"
                         >
                           Me interesa
                         </button>
@@ -307,8 +308,7 @@ export default async function MatchesPage({
                   {puedeChat && (
                     <Link
                       href={`/chat/${match.id}`}
-                      className="text-trato-green text-xs font-medium
-                        hover:underline"
+                      className="text-trato-green text-xs font-medium hover:underline"
                     >
                       Abrir chat
                     </Link>
@@ -317,8 +317,7 @@ export default async function MatchesPage({
                     <Link
                       href={`/confirmar-venta?match_id=${match.id}`}
                       className="bg-trato-dark text-white text-xs px-3 py-1.5
-                        rounded-lg font-medium hover:bg-trato-mid
-                        transition-colors"
+                        rounded-lg font-medium hover:bg-trato-mid transition-colors"
                     >
                       Confirmar venta
                     </Link>
