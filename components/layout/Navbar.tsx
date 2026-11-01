@@ -22,7 +22,10 @@ const NAV_LINKS: Record<UserRole, { href: string; label: string }[]> = {
     { href: "/buscar", label: "Mi busqueda" },
     { href: "/matches", label: "Mis matches" },
   ],
-  mecanico: [{ href: "/inspeccion", label: "Inspecciones" }],
+  mecanico: [
+    { href: "/inspeccion", label: "Mi plan" },
+    { href: "/panel-mecanico", label: "Mis inspecciones" },
+  ],
 };
 
 export function Navbar({
