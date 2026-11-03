@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { formatCLP, evaluarPrecio, getPrecioMercado } from "@/lib/autofact";
+import { createClient } from "@/lib/supabase";
 import type { PrecioMercado } from "@/types";
 
 const MARCAS = [
@@ -21,6 +22,10 @@ const MARCAS = [
   "Volvo",
   "BMW",
   "Mercedes-Benz",
+  "Lifan",
+  "Chery",
+  "MG",
+  "BYD",
   "Otra",
 ];
 
@@ -28,14 +33,16 @@ const TIPOS = ["sedan", "suv", "hatchback", "camioneta", "otro"];
 const COMUNAS = [
   "Las Condes",
   "Providencia",
-  "Ñuñoa",
+  "Nunoa",
   "Vitacura",
   "Lo Barnechea",
-  "Maipú",
+  "Maipu",
   "Santiago Centro",
   "Quilicura",
   "Puente Alto",
   "La Florida",
+  "San Miguel",
+  "Macul",
   "Otra",
 ];
 
@@ -48,6 +55,9 @@ export default function PublicarPage() {
   const [error, setError] = useState("");
   const [mercado, setMercado] = useState<PrecioMercado | null>(null);
   const [cargandoPrecio, setCargandoPrecio] = useState(false);
+  const [fotos, setFotos] = useState<File[]>([]);
+  const [fotosPreview, setFotosPreview] = useState<string[]>([]);
+  const [subiendoFotos, setSubiendoFotos] = useState(false);
 
   const [form, setForm] = useState({
     marca: "",
@@ -91,8 +101,45 @@ export default function PublicarPage() {
       ? evaluarPrecio(Number(form.precio_pedido), mercado)
       : null;
 
+  function handleFotos(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+    const nuevasFotos = [...fotos, ...files].slice(0, 8);
+    setFotos(nuevasFotos);
+    const previews = nuevasFotos.map((f) => URL.createObjectURL(f));
+    setFotosPreview(previews);
+  }
+
+  function eliminarFoto(idx: number) {
+    const nuevasFotos = fotos.filter((_, i) => i !== idx);
+    setFotos(nuevasFotos);
+    setFotosPreview(nuevasFotos.map((f) => URL.createObjectURL(f)));
+  }
+
+  async function subirFotos(autoId: string): Promise<string[]> {
+    if (fotos.length === 0) return [];
+    const supabase = createClient();
+    const urls: string[] = [];
+
+    for (const foto of fotos) {
+      const ext = foto.name.split(".").pop();
+      const path = `${autoId}/${Date.now()}.${ext}`;
+      const { error } = await supabase.storage
+        .from("autos-fotos")
+        .upload(path, foto, { contentType: foto.type });
+      if (!error) {
+        const { data } = supabase.storage
+          .from("autos-fotos")
+          .getPublicUrl(path);
+        urls.push(data.publicUrl);
+      }
+    }
+    return urls;
+  }
+
   async function handleSubmit() {
     setLoading(true);
+    setSubiendoFotos(fotos.length > 0);
     setError("");
     try {
       const res = await fetch("/api/autos", {
@@ -104,16 +151,33 @@ export default function PublicarPage() {
           km: Number(form.km),
           precio_pedido: Number(form.precio_pedido),
           precio_minimo: Number(form.precio_minimo),
+          fotos: [],
         }),
       });
       if (!res.ok) {
         const data = await res.json();
         throw new Error(data.error || "Error al publicar");
       }
+      const { auto } = await res.json();
+
+      // Subir fotos después de crear el auto
+      if (fotos.length > 0 && auto?.id) {
+        setSubiendoFotos(true);
+        const fotosUrls = await subirFotos(auto.id);
+        if (fotosUrls.length > 0) {
+          await fetch(`/api/autos/${auto.id}/fotos`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ fotos: fotosUrls }),
+          });
+        }
+      }
+
       router.push("/matches?nuevo=1");
     } catch (e: any) {
       setError(e.message);
       setLoading(false);
+      setSubiendoFotos(false);
     }
   }
 
@@ -128,19 +192,12 @@ export default function PublicarPage() {
         </p>
       </div>
 
-      {/* Progress */}
       <div className="flex gap-2 mb-2">
         {([1, 2, 3] as Step[]).map((s) => (
           <div
             key={s}
             className={`flex-1 h-1.5 rounded-full transition-colors
-            ${
-              s < step
-                ? "bg-trato-green"
-                : s === step
-                  ? "bg-trato-green-l"
-                  : "bg-trato-border"
-            }`}
+            ${s < step ? "bg-trato-green" : s === step ? "bg-trato-green-l" : "bg-trato-border"}`}
           />
         ))}
       </div>
@@ -150,7 +207,7 @@ export default function PublicarPage() {
           ? "Datos del vehículo"
           : step === 2
             ? "Precio y ubicación"
-            : "Descripción y publicar"}
+            : "Fotos y publicar"}
       </p>
 
       {/* ── Paso 1 ── */}
@@ -177,7 +234,7 @@ export default function PublicarPage() {
               type="text"
               value={form.modelo}
               onChange={(e) => set("modelo", e.target.value)}
-              placeholder="Ej: Corolla, Mazda3, Sportage"
+              placeholder="Ej: Corolla, Mazda3, X7"
               className="input-trato"
             />
           </div>
@@ -244,8 +301,7 @@ export default function PublicarPage() {
                   key={c}
                   type="button"
                   onClick={() => set("combustible", c)}
-                  className={`tag-filter capitalize
-                    ${form.combustible === c ? "active" : ""}`}
+                  className={`tag-filter capitalize ${form.combustible === c ? "active" : ""}`}
                 >
                   {c}
                 </button>
@@ -279,18 +335,12 @@ export default function PublicarPage() {
       {step === 2 && (
         <div className="space-y-4">
           {cargandoPrecio && (
-            <div
-              className="bg-trato-gray1 rounded-xl p-3 text-sm
-              text-trato-text2 animate-pulse"
-            >
+            <div className="bg-trato-gray1 rounded-xl p-3 text-sm text-trato-text2 animate-pulse">
               Consultando precio de mercado...
             </div>
           )}
           {mercado && !cargandoPrecio && (
-            <div
-              className="bg-trato-green-bg border border-trato-green/20
-              rounded-xl p-4"
-            >
+            <div className="bg-trato-green-bg border border-trato-green/20 rounded-xl p-4">
               <p className="text-trato-green text-xs font-medium mb-1">
                 Precio de mercado — {form.marca} {form.modelo} {form.anio}
               </p>
@@ -315,26 +365,20 @@ export default function PublicarPage() {
             />
             {evalPrecio && (
               <p
-                className={`text-[10px] mt-1 ${
-                  evalPrecio === "competitivo"
-                    ? "text-trato-green"
-                    : evalPrecio === "bajo"
-                      ? "text-blue-500"
-                      : "text-trato-amber"
-                }`}
+                className={`text-[10px] mt-1 ${evalPrecio === "competitivo" ? "text-trato-green" : evalPrecio === "bajo" ? "text-blue-500" : "text-trato-amber"}`}
               >
                 {evalPrecio === "competitivo"
-                  ? "✓ Precio competitivo — buen margen para match"
+                  ? "✓ Precio competitivo"
                   : evalPrecio === "bajo"
-                    ? "↓ Bajo el mercado — te vas a vender rápido"
+                    ? "↓ Bajo el mercado — te vendes rápido"
                     : "↑ Sobre el mercado — puede tardar más en hacer match"}
               </p>
             )}
           </div>
           <div>
             <label className="section-label">
-              Precio mínimo que aceptarías
-              <span className="normal-case font-normal text-trato-gray3 ml-1">
+              Precio mínimo que aceptarías{" "}
+              <span className="normal-case font-normal text-trato-gray3">
                 (privado)
               </span>
             </label>
@@ -353,8 +397,8 @@ export default function PublicarPage() {
           </div>
           <div>
             <label className="section-label">
-              Color
-              <span className="normal-case font-normal text-trato-gray3 ml-1">
+              Color{" "}
+              <span className="normal-case font-normal text-trato-gray3">
                 (opcional)
               </span>
             </label>
@@ -410,10 +454,76 @@ export default function PublicarPage() {
       {/* ── Paso 3 ── */}
       {step === 3 && (
         <div className="space-y-4">
+          {/* Fotos */}
           <div>
             <label className="section-label">
-              Descripción
+              Fotos del auto
               <span className="normal-case font-normal text-trato-gray3 ml-1">
+                (hasta 8 fotos)
+              </span>
+            </label>
+
+            <div className="grid grid-cols-3 gap-2 mt-2">
+              {fotosPreview.map((src, i) => (
+                <div
+                  key={i}
+                  className="relative aspect-square rounded-xl overflow-hidden
+                  border border-trato-border bg-trato-gray1"
+                >
+                  <img
+                    src={src}
+                    alt={`foto ${i + 1}`}
+                    className="w-full h-full object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => eliminarFoto(i)}
+                    className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/60
+                      text-white flex items-center justify-center text-xs hover:bg-black/80"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+              {fotosPreview.length < 8 && (
+                <label
+                  className="aspect-square rounded-xl border-2 border-dashed
+                  border-trato-border bg-trato-gray1 flex flex-col items-center
+                  justify-center cursor-pointer hover:border-trato-green
+                  hover:bg-trato-green-bg transition-colors"
+                >
+                  <svg
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    className="text-trato-gray3 mb-1"
+                  >
+                    <path d="M12 5v14M5 12h14" strokeLinecap="round" />
+                  </svg>
+                  <span className="text-trato-gray3 text-[10px]">Agregar</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleFotos}
+                    className="hidden"
+                  />
+                </label>
+              )}
+            </div>
+            <p className="text-trato-text2 text-[10px] mt-1">
+              Los autos con fotos reciben 3x más matches. JPG o PNG, máx 5MB
+              cada una.
+            </p>
+          </div>
+
+          <div>
+            <label className="section-label">
+              Descripción{" "}
+              <span className="normal-case font-normal text-trato-gray3">
                 (opcional)
               </span>
             </label>
@@ -421,7 +531,7 @@ export default function PublicarPage() {
               value={form.descripcion}
               onChange={(e) => set("descripcion", e.target.value)}
               placeholder="Ej: Único dueño, mantenciones al día, sin golpes..."
-              rows={4}
+              rows={3}
               className="input-trato resize-none"
             />
           </div>
@@ -433,6 +543,7 @@ export default function PublicarPage() {
               ["Kilometraje", `${Number(form.km).toLocaleString("es-CL")} km`],
               ["Precio", formatCLP(Number(form.precio_pedido))],
               ["Ubicación", form.region],
+              ["Fotos", `${fotos.length} foto${fotos.length !== 1 ? "s" : ""}`],
             ].map(([lbl, val]) => (
               <div key={lbl} className="flex justify-between text-sm">
                 <span className="text-trato-text2">{lbl}</span>
@@ -441,21 +552,16 @@ export default function PublicarPage() {
             ))}
           </div>
 
-          <div
-            className="bg-trato-green-bg border border-trato-green/20
-            rounded-xl p-3"
-          >
+          <div className="bg-trato-green-bg border border-trato-green/20 rounded-xl p-3">
             <p className="text-trato-green text-xs leading-relaxed">
               Al publicar, el motor buscará compradores compatibles
-              automáticamente. <strong>Solo pagas $100.000 si vendes.</strong>
+              automáticamente.
+              <strong> Solo pagas $100.000 si vendes.</strong>
             </p>
           </div>
 
           {error && (
-            <p
-              className="text-trato-danger text-xs bg-red-50 border
-              border-trato-danger/20 rounded-lg px-3 py-2"
-            >
+            <p className="text-trato-danger text-xs bg-red-50 border border-trato-danger/20 rounded-lg px-3 py-2">
               {error}
             </p>
           )}
@@ -469,7 +575,11 @@ export default function PublicarPage() {
               disabled={loading}
               className="btn-primary"
             >
-              {loading ? "Publicando..." : "Publicar auto"}
+              {subiendoFotos
+                ? "Subiendo fotos..."
+                : loading
+                  ? "Publicando..."
+                  : "Publicar auto"}
             </button>
           </div>
         </div>
