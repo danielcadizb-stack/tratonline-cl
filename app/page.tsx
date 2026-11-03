@@ -1,352 +1,120 @@
-﻿"use client";
+import Link from "next/link"
+import Image from "next/image"
 
-import { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-
-const COMUNAS = [
-  "Las Condes",
-  "Providencia",
-  "Nunoa",
-  "Vitacura",
-  "Lo Barnechea",
-  "Maipu",
-  "Santiago Centro",
-  "Quilicura",
-  "Puente Alto",
-  "La Florida",
-  "San Miguel",
-  "Macul",
-  "Penalolen",
-  "La Reina",
-  "Cerrillos",
-];
-
-const ESPECIALIDADES = [
-  "Toyota",
-  "Mazda",
-  "Kia",
-  "Hyundai",
-  "Chevrolet",
-  "Nissan",
-  "Honda",
-  "Ford",
-  "Todas las marcas",
-];
-
-export default function InspeccionPage() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const matchId = searchParams.get("match_id") || "";
-
-  const [mecanico, setMecanico] = useState<any>(null);
-  const [cargando, setCargando] = useState(true);
-  const [activando, setActivando] = useState(false);
-  const [error, setError] = useState("");
-  const [exito, setExito] = useState(false);
-
-  const [nombreTaller, setNombreTaller] = useState("");
-  const [comunas, setComunas] = useState<string[]>([]);
-  const [especialidad, setEspecialidad] = useState<string[]>([]);
-  const [tarifaBase, setTarifaBase] = useState("40000");
-
-  useEffect(() => {
-    fetch("/api/mecanicos/suscribir")
-      .then((r) => r.json())
-      .then(({ mecanico }) => {
-        setMecanico(mecanico);
-        if (mecanico) {
-          setNombreTaller(mecanico.nombre_taller || "");
-          setComunas(mecanico.comunas || []);
-          setEspecialidad(mecanico.especialidad || []);
-          setTarifaBase(String(mecanico.tarifa_base || 40000));
-        }
-      })
-      .finally(() => setCargando(false));
-  }, []);
-
-  function toggleComuna(c: string) {
-    setComunas((prev) =>
-      prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c],
-    );
-  }
-
-  function toggleEsp(e: string) {
-    setEspecialidad((prev) =>
-      prev.includes(e) ? prev.filter((x) => x !== e) : [...prev, e],
-    );
-  }
-
-  async function activarSuscripcion() {
-    if (!nombreTaller || comunas.length === 0) {
-      setError("Completa el nombre del taller y al menos una comuna.");
-      return;
-    }
-    setActivando(true);
-    setError("");
-    try {
-      const res = await fetch("/api/mecanicos/suscribir", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          nombre_taller: nombreTaller,
-          comunas,
-          especialidad,
-          tarifa_base: Number(tarifaBase),
-        }),
-      });
-      if (!res.ok) throw new Error("Error al activar");
-      setExito(true);
-      setTimeout(() => router.push("/panel-mecanico"), 2000);
-    } catch (e: any) {
-      setError(e.message);
-      setActivando(false);
-    }
-  }
-
-  if (cargando)
-    return (
-      <div className="max-w-lg mx-auto space-y-4">
-        {[...Array(3)].map((_, i) => (
-          <div
-            key={i}
-            className="h-16 bg-trato-gray1 rounded-xl animate-pulse"
-          />
-        ))}
-      </div>
-    );
-
-  if (exito)
-    return (
-      <div className="max-w-lg mx-auto text-center py-16">
-        <div
-          className="w-16 h-16 rounded-full bg-trato-green flex items-center
-        justify-center mx-auto mb-6"
-        >
-          <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-            <path
-              d="M4 14l7 7L24 7"
-              stroke="white"
-              stroke-width="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </div>
-        <h2 className="text-xl font-bold text-trato-text mb-2">
-          Suscripcion activada
-        </h2>
-        <p className="text-trato-text2 text-sm">
-          Ya apareces en el directorio de mecanicos. Redirigiendo...
-        </p>
-      </div>
-    );
-
+export default function LandingPage() {
   return (
-    <div className="max-w-lg mx-auto">
-      {mecanico?.suscripcion_activa ? (
-        <div
-          className="bg-trato-green-bg border border-trato-green/20
-          rounded-xl p-4 mb-6 flex items-center gap-3"
-        >
-          <div
-            className="w-8 h-8 rounded-full bg-trato-green flex items-center
-            justify-center flex-shrink-0"
-          >
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path
-                d="M2 7l3.5 3.5L12 3"
-                stroke="white"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </div>
-          <div>
-            <p className="text-trato-green font-medium text-sm">
-              Suscripcion activa
-            </p>
-            <p className="text-trato-green/70 text-xs">
-              Vence:{" "}
-              {new Date(mecanico.suscripcion_vence).toLocaleDateString("es-CL")}
-            </p>
-          </div>
+    <div className="min-h-screen bg-trato-dark">
+      <nav className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
+        <Image src="/logo.svg" alt="TratOnline" width={150} height={34} priority />
+        <div className="flex items-center gap-3">
+          <Link href="/login" className="text-trato-gray2 text-sm hover:text-white transition-colors">Ingresar</Link>
+          <Link href="/registro" className="bg-trato-green text-white text-sm px-4 py-2 rounded-lg font-medium hover:bg-trato-green-l transition-colors">Crear cuenta gratis</Link>
         </div>
-      ) : (
-        <div
-          className="bg-trato-amber-bg border border-trato-amber/20
-          rounded-xl p-4 mb-6"
-        >
-          <p className="text-trato-amber font-medium text-sm">
-            Suscripcion inactiva
-          </p>
-          <p className="text-trato-amber/70 text-xs mt-1">
-            Activa tu plan para aparecer en el directorio y recibir solicitudes.
-          </p>
+      </nav>
+      <section className="max-w-4xl mx-auto px-4 pt-16 pb-20 text-center">
+        <div className="inline-flex items-center gap-2 bg-trato-green/10 border border-trato-green/20 rounded-full px-4 py-1.5 mb-6">
+          <div className="w-2 h-2 rounded-full bg-trato-green animate-pulse" />
+          <span className="text-trato-green text-xs font-medium">Plataforma activa en Santiago</span>
         </div>
-      )}
-
-      <div className="mb-6">
-        <h1 className="text-xl font-semibold text-trato-text">
-          Plan Mecanico TratOnline
+        <h1 className="text-4xl sm:text-5xl font-bold text-white leading-tight tracking-tight mb-4">
+          Compra y vende tu auto<br/>
+          <span className="text-trato-green-l">sin complicaciones</span>
         </h1>
-        <p className="text-trato-text2 text-sm mt-1">
-          Accede a clientes que necesitan inspeccion mecanica en tu zona
+        <p className="text-trato-gray2 text-lg max-w-xl mx-auto mb-8 leading-relaxed">
+          Conectamos vendedores con compradores ideales mediante un motor de matching inteligente. Todo el proceso en una sola plataforma.
         </p>
-      </div>
-
-      <div className="bg-trato-dark rounded-2xl p-6 mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <p className="text-white font-bold text-2xl">$15.000</p>
-            <p className="text-trato-gray3 text-xs">al mes</p>
-          </div>
-          <span className="badge-green">Plan activo</span>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center mb-12">
+          <Link href="/registro" className="bg-trato-green text-white px-8 py-3.5 rounded-[10px] font-semibold text-sm hover:bg-trato-green-l transition-colors">Publicar mi auto gratis</Link>
+          <Link href="/registro" className="bg-trato-steel/30 text-white px-8 py-3.5 rounded-[10px] font-semibold text-sm border border-trato-steel/50 hover:bg-trato-steel/50 transition-colors">Buscar un auto</Link>
         </div>
-        <div className="space-y-2">
-          {[
-            "Apareces en el directorio de mecanicos",
-            "Recibes solicitudes de inspeccion en tu zona",
-            "Chat directo con compradores",
-            "Comision 10% por inspeccion coordinada",
-            "Rating visible para generar confianza",
-          ].map((b) => (
-            <div
-              key={b}
-              className="flex items-center gap-2 text-xs text-trato-gray2"
-            >
-              <div
-                className="w-4 h-4 rounded-full bg-trato-green/20 flex items-center
-                justify-center flex-shrink-0"
-              >
-                <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
-                  <path
-                    d="M1 4l2 2 4-4"
-                    stroke="#22A374"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </div>
-              {b}
+        <div className="grid grid-cols-3 gap-4 max-w-sm mx-auto">
+          <div className="text-center">
+            <p className="text-trato-green-l text-2xl font-bold">Gratis</p>
+            <p className="text-trato-gray3 text-xs mt-0.5">Para publicar</p>
+          </div>
+          <div className="text-center">
+            <p className="text-trato-green-l text-2xl font-bold">48h</p>
+            <p className="text-trato-gray3 text-xs mt-0.5">Primer match</p>
+          </div>
+          <div className="text-center">
+            <p className="text-trato-green-l text-2xl font-bold">100K</p>
+            <p className="text-trato-gray3 text-xs mt-0.5">Solo si vendes</p>
+          </div>
+        </div>
+      </section>
+      <section className="bg-trato-mid border-t border-trato-steel/30 py-16">
+        <div className="max-w-4xl mx-auto px-4">
+          <h2 className="text-2xl font-bold text-white text-center mb-2">Como funciona</h2>
+          <p className="text-trato-gray3 text-center text-sm mb-10">Tres pasos para cerrar tu venta</p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            <div className="bg-trato-dark border border-trato-steel/40 rounded-2xl p-6 text-center">
+              <div className="text-3xl mb-4">🚗</div>
+              <div className="w-6 h-6 rounded-full bg-trato-green text-white text-xs font-bold flex items-center justify-center mx-auto mb-3">1</div>
+              <h3 className="text-white font-semibold mb-2">Publicas gratis</h3>
+              <p className="text-trato-gray3 text-sm leading-relaxed">Carga los datos de tu auto en 3 minutos. El motor de matching empieza a buscar compradores de inmediato.</p>
             </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="space-y-5">
-        <div>
-          <label className="section-label">Nombre de tu taller</label>
-          <input
-            type="text"
-            value={nombreTaller}
-            onChange={(e) => setNombreTaller(e.target.value)}
-            placeholder="Ej: Taller Mecanico Rodriguez"
-            className="input-trato"
-          />
-        </div>
-
-        <div>
-          <label className="section-label">
-            Comunas donde trabajas
-            <span className="normal-case font-normal text-trato-gray3 ml-1">
-              (selecciona una o mas)
-            </span>
-          </label>
-          <div className="flex flex-wrap gap-2 mt-2">
-            {COMUNAS.map((c) => (
-              <button
-                key={c}
-                type="button"
-                onClick={() => toggleComuna(c)}
-                className={`tag-filter ${comunas.includes(c) ? "active" : ""}`}
-              >
-                {c}
-              </button>
-            ))}
+            <div className="bg-trato-dark border border-trato-steel/40 rounded-2xl p-6 text-center">
+              <div className="text-3xl mb-4">⚡</div>
+              <div className="w-6 h-6 rounded-full bg-trato-green text-white text-xs font-bold flex items-center justify-center mx-auto mb-3">2</div>
+              <h3 className="text-white font-semibold mb-2">Hacemos el match</h3>
+              <p className="text-trato-gray3 text-sm leading-relaxed">Nuestro algoritmo conecta tu auto con compradores que tienen exactamente tu perfil. Score de 0 a 100.</p>
+            </div>
+            <div className="bg-trato-dark border border-trato-steel/40 rounded-2xl p-6 text-center">
+              <div className="text-3xl mb-4">🤝</div>
+              <div className="w-6 h-6 rounded-full bg-trato-green text-white text-xs font-bold flex items-center justify-center mx-auto mb-3">3</div>
+              <h3 className="text-white font-semibold mb-2">Cierras el trato</h3>
+              <p className="text-trato-gray3 text-sm leading-relaxed">Chatean, coordinan la visita y la inspeccion mecanica. Solo pagas cuando la venta se concreta.</p>
+            </div>
           </div>
         </div>
-
-        <div>
-          <label className="section-label">
-            Especialidad por marca
-            <span className="normal-case font-normal text-trato-gray3 ml-1">
-              (opcional)
-            </span>
-          </label>
-          <div className="flex flex-wrap gap-2 mt-2">
-            {ESPECIALIDADES.map((e) => (
-              <button
-                key={e}
-                type="button"
-                onClick={() => toggleEsp(e)}
-                className={`tag-filter ${especialidad.includes(e) ? "active" : ""}`}
-              >
-                {e}
-              </button>
-            ))}
+      </section>
+      <section className="py-16 max-w-4xl mx-auto px-4">
+        <h2 className="text-2xl font-bold text-white text-center mb-10">Una plataforma, tres roles</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="bg-trato-mid border border-trato-steel/40 rounded-2xl p-6">
+            <div className="text-3xl mb-3">🚗</div>
+            <h3 className="text-white font-semibold mb-2">Vendedor</h3>
+            <p className="text-trato-gray3 text-sm leading-relaxed mb-4">Publica tu auto gratis y recibe matches con compradores reales. Solo pagas si vendes.</p>
+            <Link href="/registro" className="text-trato-green-l text-sm font-medium hover:underline">Publicar mi auto</Link>
+          </div>
+          <div className="bg-trato-mid border border-trato-steel/40 rounded-2xl p-6">
+            <div className="text-3xl mb-3">🔍</div>
+            <h3 className="text-white font-semibold mb-2">Comprador</h3>
+            <p className="text-trato-gray3 text-sm leading-relaxed mb-4">Define que buscas y te avisamos apenas aparezca un auto compatible. Sin perder tiempo.</p>
+            <Link href="/registro" className="text-trato-green-l text-sm font-medium hover:underline">Buscar mi auto</Link>
+          </div>
+          <div className="bg-trato-mid border border-trato-steel/40 rounded-2xl p-6">
+            <div className="text-3xl mb-3">🔧</div>
+            <h3 className="text-white font-semibold mb-2">Mecanico</h3>
+            <p className="text-trato-gray3 text-sm leading-relaxed mb-4">Ofrece inspecciones pre-compra en tu zona. Accede a clientes que necesitan tu servicio.</p>
+            <Link href="/registro" className="text-trato-green-l text-sm font-medium hover:underline">Registrarme</Link>
           </div>
         </div>
-
-        <div>
-          <label className="section-label">
-            Tu tarifa por inspeccion (CLP)
-          </label>
-          <input
-            type="number"
-            value={tarifaBase}
-            onChange={(e) => setTarifaBase(e.target.value)}
-            placeholder="40000"
-            min="20000"
-            step="5000"
-            className="input-trato"
-          />
-          <p className="text-trato-text2 text-[10px] mt-1">
-            Precio base sugerido: entre $35.000 y $60.000
-          </p>
+      </section>
+      <section className="bg-trato-mid border-t border-trato-steel/30 py-16">
+        <div className="max-w-2xl mx-auto px-4 text-center">
+          <h2 className="text-3xl font-bold text-white mb-3">Listo para hacer el trato</h2>
+          <p className="text-trato-gray3 mb-8">Unete a la plataforma que conecta vendedores y compradores de autos en Chile de forma inteligente.</p>
+          <Link href="/registro" className="inline-block bg-trato-green text-white px-10 py-4 rounded-[10px] font-semibold hover:bg-trato-green-l transition-colors">Crear cuenta gratis</Link>
         </div>
-
-        {error && (
-          <p
-            className="text-trato-danger text-xs bg-red-50 border
-            border-trato-danger/20 rounded-lg px-3 py-2"
-          >
-            {error}
-          </p>
-        )}
-
-        <div
-          className="bg-trato-green-bg border border-trato-green/20
-          rounded-xl p-3"
-        >
-          <p className="text-trato-green text-xs leading-relaxed">
-            Pago simulado activado — cuando Khipu este listo se cobraran los
-            $15.000 automaticamente cada 30 dias.
-          </p>
+      </section>
+      <footer className="border-t border-trato-steel/30 py-8">
+        <div className="max-w-5xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <Image src="/logo.svg" alt="TratOnline" width={120} height={30} />
+          <div className="flex gap-6 text-trato-gray3 text-xs">
+            <Link href="/registro" className="hover:text-white transition-colors">Registrarse</Link>
+            <Link href="/login" className="hover:text-white transition-colors">Ingresar</Link>
+            <a href="mailto:soporte@tratonline.cl" className="hover:text-white transition-colors">soporte@tratonline.cl</a>
+          </div>
+          <div className="flex items-center gap-4">
+            <p className="text-trato-gray3 text-xs">2026 TratOnline - Alfester Agency</p>
+            <a href="https://wa.me/56967959942" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 bg-[#25D366] text-white text-xs px-3 py-1.5 rounded-full hover:bg-[#20b558] transition-colors font-medium">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+              +56 9 6795 9942
+            </a>
+          </div>
         </div>
-
-        <button
-          onClick={activarSuscripcion}
-          disabled={activando}
-          className="btn-primary"
-        >
-          {activando
-            ? "Activando..."
-            : mecanico?.suscripcion_activa
-              ? "Renovar suscripcion"
-              : "Activar plan por $15.000/mes"}
-        </button>
-
-        {mecanico?.suscripcion_activa && (
-          <button
-            onClick={() => router.push("/panel-mecanico")}
-            className="btn-secondary"
-          >
-            Ver mi panel de inspecciones
-          </button>
-        )}
-      </div>
+      </footer>
     </div>
-  );
+  )
 }
