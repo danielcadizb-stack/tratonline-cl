@@ -28,7 +28,6 @@ export default async function MatchesPage({
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
-  // Mecánico va directo a su panel
   if (user.rol === "mecanico") redirect("/panel-mecanico");
 
   const supabase = await createServerClientInstance();
@@ -223,7 +222,7 @@ export default async function MatchesPage({
         </div>
       )}
 
-      <div className="space-y-3">
+      <div className="space-y-4">
         {matches.map((match: any) => {
           const auto = match.auto;
           const estadoInfo = ESTADO_LABEL[match.estado] ?? {
@@ -249,8 +248,19 @@ export default async function MatchesPage({
             <div
               key={match.id}
               className="card-trato hover:border-trato-steel/50
-              transition-colors"
+              transition-colors overflow-hidden"
             >
+              {/* Foto del auto */}
+              {auto?.fotos?.[0] && (
+                <div className="aspect-video rounded-xl overflow-hidden mb-3 bg-trato-dark -mx-4 -mt-4">
+                  <img
+                    src={auto.fotos[0]}
+                    alt={`${auto.marca} ${auto.modelo}`}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              )}
+
               <div className="flex items-start justify-between mb-3">
                 <div>
                   <p className="font-semibold text-trato-text">
