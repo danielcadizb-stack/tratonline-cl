@@ -11,7 +11,6 @@ export default function LandingPage() {
           <Link href="/registro" className="bg-trato-green text-white text-sm px-4 py-2 rounded-lg font-medium hover:bg-trato-green-l transition-colors">Crear cuenta gratis</Link>
         </div>
       </nav>
-
       <section className="max-w-4xl mx-auto px-4 pt-16 pb-20 text-center">
         <div className="inline-flex items-center gap-2 bg-trato-green/10 border border-trato-green/20 rounded-full px-4 py-1.5 mb-6">
           <div className="w-2 h-2 rounded-full bg-trato-green animate-pulse" />
@@ -43,7 +42,6 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
-
       <section className="bg-trato-mid border-t border-trato-steel/30 py-16">
         <div className="max-w-4xl mx-auto px-4">
           <h2 className="text-2xl font-bold text-white text-center mb-2">Como funciona</h2>
@@ -70,14 +68,13 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
-
       <section className="py-16 max-w-4xl mx-auto px-4">
         <div className="bg-trato-mid border border-trato-amber/20 rounded-2xl p-8 text-center mb-6">
           <div className="text-4xl mb-3">🔧</div>
           <h2 className="text-2xl font-bold text-white mb-2">Inspeccion precompra</h2>
           <p className="text-trato-gray3 text-sm leading-relaxed max-w-lg mx-auto mb-2">
             3 de cada 4 autos usados en Chile presentan fallas ocultas al momento de la compra.
-            Nuestros mecanicos certificados inspeccionan cualquier auto — aunque no este publicado en TratOnline.
+            Nuestros mecanicos certificados inspeccionan cualquier auto, aunque no este publicado en TratOnline.
           </p>
           <div className="grid grid-cols-3 gap-4 max-w-sm mx-auto my-6">
             <div className="text-center">
@@ -94,11 +91,10 @@ export default function LandingPage() {
             </div>
           </div>
           <Link href="/inspeccion" className="inline-block bg-trato-green text-white px-8 py-3 rounded-[10px] font-semibold text-sm hover:bg-trato-green-l transition-colors">
-            Solicitar inspeccion →
+            Solicitar inspeccion
           </Link>
         </div>
       </section>
-
       <section className="bg-trato-mid border-t border-trato-steel/30 py-16">
         <div className="max-w-4xl mx-auto px-4">
           <h2 className="text-2xl font-bold text-white text-center mb-10">Una plataforma, tres roles</h2>
@@ -124,13 +120,11 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
-
       <section className="py-16 max-w-2xl mx-auto px-4 text-center">
         <h2 className="text-3xl font-bold text-white mb-3">Listo para hacer el trato</h2>
         <p className="text-trato-gray3 mb-8">Unete a la plataforma que conecta vendedores y compradores de autos en Chile de forma inteligente.</p>
         <Link href="/registro" className="inline-block bg-trato-green text-white px-10 py-4 rounded-[10px] font-semibold hover:bg-trato-green-l transition-colors">Crear cuenta gratis</Link>
       </section>
-
       <footer className="border-t border-trato-steel/30 py-8">
         <div className="max-w-5xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
           <Image src="/logo.svg" alt="TratOnline" width={120} height={30} />
