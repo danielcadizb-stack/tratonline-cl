@@ -22,6 +22,14 @@ const ESTADO_COLOR: Record<string, string> = {
   rechazado: "text-trato-danger bg-red-500/10 px-2 py-0.5 rounded-full text-xs",
 };
 
+const MONTOS: Record<string, number> = {
+  fee_venta: 100000,
+  inspeccion_basic: 34990,
+  inspeccion_comp: 49990,
+  inspeccion_urg: 64990,
+  membresia: 15000,
+};
+
 export default function AdminPagosPage() {
   const router = useRouter();
   const [pagos, setPagos] = useState<any[]>([]);
@@ -31,6 +39,22 @@ export default function AdminPagosPage() {
   );
   const [notas, setNotas] = useState<Record<string, string>>({});
   const [procesando, setProcesando] = useState<string | null>(null);
+  const [mostrarForm, setMostrarForm] = useState(false);
+  const [guardando, setGuardando] = useState(false);
+
+  const [form, setForm] = useState({
+    tipo: "inspeccion",
+    subtipo: "inspeccion_comp",
+    nombre_cliente: "",
+    email_cliente: "",
+    telefono: "",
+    detalle: "",
+    comprobante_ref: "",
+    monto_manual: "",
+  });
+
+  const set = (campo: string, valor: string) =>
+    setForm((prev) => ({ ...prev, [campo]: valor }));
 
   useEffect(() => {
     cargarPagos();
@@ -56,6 +80,44 @@ export default function AdminPagosPage() {
     });
     await cargarPagos();
     setProcesando(null);
+  }
+
+  async function registrarPago() {
+    if (!form.nombre_cliente || !form.email_cliente) {
+      alert("Completa nombre y email del cliente");
+      return;
+    }
+    setGuardando(true);
+    const monto = form.monto_manual
+      ? Number(form.monto_manual)
+      : MONTOS[form.subtipo] || MONTOS[form.tipo] || 0;
+
+    await fetch("/api/pagos", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        tipo: form.tipo,
+        monto,
+        nombre_cliente: form.nombre_cliente,
+        email_cliente: form.email_cliente,
+        telefono: form.telefono,
+        detalle: form.detalle || `${form.tipo} — ${form.subtipo}`,
+        comprobante_ref: form.comprobante_ref,
+      }),
+    });
+    setForm({
+      tipo: "inspeccion",
+      subtipo: "inspeccion_comp",
+      nombre_cliente: "",
+      email_cliente: "",
+      telefono: "",
+      detalle: "",
+      comprobante_ref: "",
+      monto_manual: "",
+    });
+    setMostrarForm(false);
+    setGuardando(false);
+    await cargarPagos();
   }
 
   const pagosFiltrados = pagos.filter((p) =>
@@ -108,13 +170,146 @@ export default function AdminPagosPage() {
             Gestiona y verifica todos los pagos por transferencia
           </p>
         </div>
-        <button
-          onClick={cargarPagos}
-          className="text-trato-green text-xs border border-trato-green/30 px-3 py-1.5 rounded-lg hover:bg-trato-green/10 transition-colors"
-        >
-          Actualizar
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setMostrarForm(!mostrarForm)}
+            className="bg-trato-green text-white text-xs px-3 py-1.5 rounded-lg font-medium hover:bg-trato-green-l transition-colors"
+          >
+            + Registrar pago
+          </button>
+          <button
+            onClick={cargarPagos}
+            className="text-trato-green text-xs border border-trato-green/30 px-3 py-1.5 rounded-lg hover:bg-trato-green/10 transition-colors"
+          >
+            Actualizar
+          </button>
+        </div>
       </div>
+
+      {/* Formulario registrar pago manual */}
+      {mostrarForm && (
+        <div className="card-trato mb-6 border-trato-green/30">
+          <h2 className="font-semibold text-trato-text mb-4">
+            Registrar pago recibido
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="section-label">Tipo de pago</label>
+              <select
+                value={form.tipo}
+                onChange={(e) => set("tipo", e.target.value)}
+                className="input-trato"
+              >
+                <option value="fee_venta">Fee de venta — $100.000</option>
+                <option value="inspeccion">Inspeccion precompra</option>
+                <option value="membresia">Membresia mecanico — $15.000</option>
+              </select>
+            </div>
+            {form.tipo === "inspeccion" && (
+              <div>
+                <label className="section-label">Plan de inspeccion</label>
+                <select
+                  value={form.subtipo}
+                  onChange={(e) => set("subtipo", e.target.value)}
+                  className="input-trato"
+                >
+                  <option value="inspeccion_basic">Basica — $34.990</option>
+                  <option value="inspeccion_comp">Completa — $49.990</option>
+                  <option value="inspeccion_urg">Urgente — $64.990</option>
+                </select>
+              </div>
+            )}
+            <div>
+              <label className="section-label">Nombre del cliente</label>
+              <input
+                type="text"
+                value={form.nombre_cliente}
+                onChange={(e) => set("nombre_cliente", e.target.value)}
+                placeholder="Juan Perez"
+                className="input-trato"
+              />
+            </div>
+            <div>
+              <label className="section-label">Email del cliente</label>
+              <input
+                type="email"
+                value={form.email_cliente}
+                onChange={(e) => set("email_cliente", e.target.value)}
+                placeholder="cliente@email.com"
+                className="input-trato"
+              />
+            </div>
+            <div>
+              <label className="section-label">Telefono</label>
+              <input
+                type="tel"
+                value={form.telefono}
+                onChange={(e) => set("telefono", e.target.value)}
+                placeholder="+56 9 1234 5678"
+                className="input-trato"
+              />
+            </div>
+            <div>
+              <label className="section-label">Ref comprobante</label>
+              <input
+                type="text"
+                value={form.comprobante_ref}
+                onChange={(e) => set("comprobante_ref", e.target.value)}
+                placeholder="N° operacion o referencia"
+                className="input-trato"
+              />
+            </div>
+            <div>
+              <label className="section-label">
+                Monto
+                <span className="normal-case font-normal text-trato-gray3 ml-1">
+                  (dejar vacio para usar precio del plan)
+                </span>
+              </label>
+              <input
+                type="number"
+                value={form.monto_manual}
+                onChange={(e) => set("monto_manual", e.target.value)}
+                placeholder={String(
+                  MONTOS[form.subtipo] || MONTOS[form.tipo] || 0,
+                )}
+                className="input-trato"
+              />
+            </div>
+            <div>
+              <label className="section-label">
+                Detalle adicional (opcional)
+              </label>
+              <input
+                type="text"
+                value={form.detalle}
+                onChange={(e) => set("detalle", e.target.value)}
+                placeholder="Ej: Toyota Corolla 2020, Maipu"
+                className="input-trato"
+              />
+            </div>
+          </div>
+          <div className="flex gap-3 mt-4">
+            <button
+              onClick={registrarPago}
+              disabled={guardando}
+              className="btn-primary"
+            >
+              {guardando ? "Registrando..." : "Registrar pago pendiente"}
+            </button>
+            <button
+              onClick={() => setMostrarForm(false)}
+              className="btn-secondary"
+            >
+              Cancelar
+            </button>
+          </div>
+          <p className="text-trato-text2 text-xs mt-3">
+            El pago quedara en estado "pendiente" hasta que lo verifiques en
+            Global66 y hagas click en Verificar.
+          </p>
+        </div>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4 mb-6">
@@ -153,7 +348,7 @@ export default function AdminPagosPage() {
           <button
             key={f}
             onClick={() => setFiltro(f)}
-            className={`px-4 py-1.5 rounded-lg text-sm transition-colors capitalize
+            className={`px-4 py-1.5 rounded-lg text-sm transition-colors
               ${
                 filtro === f
                   ? "bg-trato-green text-white"
@@ -181,7 +376,8 @@ export default function AdminPagosPage() {
             Sin pagos en esta categoria
           </p>
           <p className="text-trato-text2 text-sm">
-            Los pagos apareceran aqui cuando los clientes transfieran
+            Usa el boton "Registrar pago" cuando recibas un comprobante por
+            email
           </p>
         </div>
       ) : (
