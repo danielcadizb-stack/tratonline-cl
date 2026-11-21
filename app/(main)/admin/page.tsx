@@ -26,6 +26,7 @@ export default async function AdminPage() {
     { count: matchesCerrados },
     { count: matchesActivos },
     { count: mecanicosActivos },
+    { count: pagosPendientes },
   ] = await Promise.all([
     supabase.from("autos").select("*", { count: "exact", head: true }),
     supabase
@@ -58,6 +59,10 @@ export default async function AdminPage() {
       .from("mecanicos")
       .select("*", { count: "exact", head: true })
       .eq("suscripcion_activa", true),
+    supabase
+      .from("pagos")
+      .select("*", { count: "exact", head: true })
+      .eq("estado", "pendiente"),
   ]);
 
   const ingresosEstimados = (matchesCerrados || 0) * 100000;
@@ -110,7 +115,28 @@ export default async function AdminPage() {
             Vista completa de TratOnline
           </p>
         </div>
-        <span className="badge-green">Admin</span>
+        <div className="flex items-center gap-3">
+          {(pagosPendientes || 0) > 0 && (
+            <Link
+              href="/admin/pagos"
+              className="flex items-center gap-2 bg-trato-amber text-white text-xs
+                px-3 py-1.5 rounded-lg font-medium hover:opacity-90 transition-colors"
+            >
+              <div className="w-4 h-4 rounded-full bg-white/30 flex items-center justify-center text-[10px] font-bold">
+                {pagosPendientes}
+              </div>
+              Pagos pendientes
+            </Link>
+          )}
+          <Link
+            href="/admin/pagos"
+            className="text-trato-green text-xs border border-trato-green/30
+              px-3 py-1.5 rounded-lg hover:bg-trato-green/10 transition-colors"
+          >
+            Ver todos los pagos →
+          </Link>
+          <span className="badge-green">Admin</span>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
