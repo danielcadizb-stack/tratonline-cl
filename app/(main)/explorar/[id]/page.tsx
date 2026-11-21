@@ -1,134 +1,122 @@
-import { createServerClientInstance } from "@/lib/supabase-server";
-import Link from "next/link";
-import { formatCLP } from "@/lib/autofact";
-import FiltrosExplorar from "./FiltrosExplorar";
+import { redirect } from 'next/navigation'
+import Link from 'next/link'
+import { getCurrentUser, createServerClientInstance } from '@/lib/supabase-server'
+import { formatCLP } from '@/lib/autofact'
 
-export default async function ExplorarPage({
-  searchParams,
+export default async function AutoPublicoPage({
+  params,
 }: {
-  searchParams: {
-    marca?: string;
-    precio_min?: string;
-    precio_max?: string;
-    region?: string;
-    comuna?: string;
-    q?: string;
-  };
+  params: { id: string }
 }) {
-  const supabase = await createServerClientInstance();
+  const supabase = await createServerClientInstance()
 
-  let query = supabase
-    .from("autos")
-    .select("*")
-    .eq("estado", "disponible")
-    .order("created_at", { ascending: false });
+  const { data: auto } = await supabase
+    .from('autos')
+    .select('*')
+    .eq('id', params.id)
+    .eq('estado', 'disponible')
+    .single()
 
-  if (searchParams.marca)
-    query = query.ilike("marca", `%${searchParams.marca}%`);
-  if (searchParams.comuna)
-    query = query.ilike("region", `%${searchParams.comuna}%`);
-  else if (searchParams.region)
-    query = query.ilike("region", `%${searchParams.region}%`);
-  if (searchParams.precio_min)
-    query = query.gte("precio_pedido", Number(searchParams.precio_min));
-  if (searchParams.precio_max)
-    query = query.lte("precio_pedido", Number(searchParams.precio_max));
-  if (searchParams.q)
-    query = query.or(
-      `marca.ilike.%${searchParams.q}%,modelo.ilike.%${searchParams.q}%`,
-    );
+  if (!auto) redirect('/explorar')
 
-  const { data: autos } = await query.limit(50);
+  const user = await getCurrentUser()
 
   return (
-    <div className="max-w-5xl mx-auto">
-      <div className="mb-6">
+    <div className="max-w-2xl mx-auto">
+      <div className="flex items-center gap-3 mb-6">
+        <Link href="/explorar" className="text-trato-text2 hover:text-trato-text transition-colors">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M12 4l-6 6 6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </Link>
         <h1 className="text-xl font-semibold text-trato-text">
-          Explorar autos
+          {auto.marca} {auto.modelo} {auto.anio}
         </h1>
-        <p className="text-trato-text2 text-sm mt-1">
-          {autos?.length || 0} autos disponibles
-        </p>
       </div>
 
-      <FiltrosExplorar defaultValues={searchParams} />
-
-      {!autos || autos.length === 0 ? (
-        <div
-          className="text-center py-16 border border-dashed
-          border-trato-border rounded-2xl"
-        >
-          <p className="text-trato-text font-medium mb-2">
-            No hay autos con esos filtros
-          </p>
-          <Link
-            href="/explorar"
-            className="text-trato-green text-sm hover:underline"
-          >
-            Ver todos los autos
-          </Link>
+      {auto.fotos && auto.fotos.length > 0 ? (
+        <div className="mb-6">
+          <div className="aspect-video rounded-2xl overflow-hidden mb-2 bg-trato-dark">
+            <img src={auto.fotos[0]} alt={auto.marca} className="w-full h-full object-cover" />
+          </div>
+          {auto.fotos.length > 1 && (
+            <div className="grid grid-cols-4 gap-2">
+              {auto.fotos.slice(1, 5).map((url: string, i: number) => (
+                <div key={i} className="aspect-square rounded-xl overflow-hidden bg-trato-dark">
+                  <img src={url} alt={auto.marca} className="w-full h-full object-cover" />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {autos.map((auto: any) => (
-            <div
-              key={auto.id}
-              className="bg-trato-mid border border-trato-steel/30 rounded-2xl
-                overflow-hidden hover:border-trato-steel/60 transition-colors"
-            >
-              <div className="aspect-video bg-trato-dark relative overflow-hidden">
-                {auto.fotos?.[0] ? (
-                  <img
-                    src={auto.fotos[0]}
-                    alt={`${auto.marca} ${auto.modelo}`}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <span className="text-4xl">🚗</span>
-                  </div>
-                )}
-                {auto.fotos?.length > 1 && (
-                  <div
-                    className="absolute bottom-2 right-2 bg-black/60 text-white
-                    text-[10px] px-2 py-0.5 rounded-full"
-                  >
-                    +{auto.fotos.length - 1} fotos
-                  </div>
-                )}
-              </div>
-              <div className="p-4">
-                <div className="flex items-start justify-between mb-2">
-                  <div>
-                    <p className="font-semibold text-white">
-                      {auto.marca} {auto.modelo}
-                    </p>
-                    <p className="text-trato-gray3 text-xs mt-0.5">
-                      {auto.anio} · {Number(auto.km).toLocaleString("es-CL")} km
-                      · {auto.transmision === "automatico" ? "Aut." : "Man."}
-                    </p>
-                  </div>
-                  <p className="text-trato-green font-bold text-sm flex-shrink-0 ml-2">
-                    {formatCLP(auto.precio_pedido)}
-                  </p>
-                </div>
-                <div className="flex items-center justify-between mt-3">
-                  <span className="text-trato-gray3 text-xs">
-                    📍 {auto.region}
-                  </span>
-                  <Link
-                    href={`/explorar/${auto.id}`}
-                    className="bg-trato-green text-white text-xs px-3 py-1.5
-                      rounded-lg font-medium hover:bg-trato-green-l transition-colors"
-                  >
-                    Ver auto
-                  </Link>
-                </div>
-              </div>
+        <div className="aspect-video rounded-2xl bg-trato-gray1 flex items-center justify-center mb-6">
+          <span className="text-6xl">🚗</span>
+        </div>
+      )}
+
+      <div className="bg-trato-dark rounded-2xl p-5 mb-4 flex items-center justify-between">
+        <div>
+          <p className="text-trato-gray3 text-xs mb-1">Precio de venta</p>
+          <p className="text-white text-3xl font-bold">{formatCLP(auto.precio_pedido)}</p>
+        </div>
+        {user ? (
+          user.rol === 'comprador' ? (
+            <Link href="/matches" className="bg-trato-green text-white px-5 py-2.5 rounded-[10px] font-semibold text-sm hover:bg-trato-green-l transition-colors">
+              Ver si hay match
+            </Link>
+          ) : user.rol === 'vendedor' ? (
+            <Link href="/matches" className="bg-trato-green text-white px-5 py-2.5 rounded-[10px] font-semibold text-sm hover:bg-trato-green-l transition-colors">
+              Volver a mis matches
+            </Link>
+          ) : null
+        ) : (
+          <Link href="/registro" className="bg-trato-green text-white px-5 py-2.5 rounded-[10px] font-semibold text-sm hover:bg-trato-green-l transition-colors">
+            Me interesa
+          </Link>
+        )}
+      </div>
+
+      <div className="card-trato mb-4">
+        <p className="section-label mb-3">Datos del vehiculo</p>
+        <div className="grid grid-cols-2 gap-y-3">
+          {[
+            ['Marca',       auto.marca],
+            ['Modelo',      auto.modelo],
+            ['Año',         auto.anio],
+            ['Kilometraje', Number(auto.km).toLocaleString('es-CL') + ' km'],
+            ['Transmision', auto.transmision === 'automatico' ? 'Automatico' : 'Manual'],
+            ['Combustible', auto.combustible],
+            ['Tipo',        auto.tipo || '-'],
+            ['Color',       auto.color || '-'],
+            ['Ubicacion',   auto.region],
+          ].map(([lbl, val]) => (
+            <div key={lbl}>
+              <p className="text-trato-text2 text-xs">{lbl}</p>
+              <p className="text-trato-text text-sm font-medium capitalize">{val}</p>
             </div>
           ))}
         </div>
-      )}
+        {auto.descripcion && (
+          <div className="mt-3 pt-3 border-t border-trato-border">
+            <p className="text-trato-text2 text-xs mb-1">Descripcion del vendedor</p>
+            <p className="text-trato-text text-sm leading-relaxed">{auto.descripcion}</p>
+          </div>
+        )}
+      </div>
+
+      <div className="bg-trato-green-bg border border-trato-green/20 rounded-xl p-4">
+        <p className="text-trato-green font-medium text-sm mb-1">Compra segura con TratOnline</p>
+        <p className="text-trato-green/80 text-xs leading-relaxed">
+          Coordina la visita e inspeccion mecanica por nuestra plataforma.
+          Solo el vendedor paga $100.000 cuando se concreta la venta.
+        </p>
+        {!user && (
+          <Link href="/registro" className="inline-block mt-3 bg-trato-green text-white text-xs px-4 py-2 rounded-lg font-medium hover:bg-trato-green-l transition-colors">
+            Crear cuenta gratis para contactar
+          </Link>
+        )}
+      </div>
     </div>
-  );
+  )
 }
