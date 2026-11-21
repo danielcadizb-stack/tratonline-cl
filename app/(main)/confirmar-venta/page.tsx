@@ -2,140 +2,116 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase";
-import { formatCLP } from "@/lib/autofact";
+
+const CUENTA_PAGO = {
+  titular: "Alfester SpA",
+  banco: "Global66 / Global Card S.A.",
+  tipo: "Cuenta Vista",
+  numero: "13928548",
+  rut: "78.502.587-3",
+  email: "kovaapp2@gmail.com",
+};
 
 export default function ConfirmarVentaPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const matchId = searchParams.get("match_id") || "";
 
-  const [match, setMatch] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [procesando, setProcesando] = useState(false);
-  const [error, setError] = useState("");
-  const [exito, setExito] = useState(false);
+  const [paso, setPaso] = useState<"instrucciones" | "confirmado">(
+    "instrucciones",
+  );
+  const [loading, setLoading] = useState(false);
+  const [copiado, setCopiado] = useState("");
+  const [auto, setAuto] = useState<any>(null);
 
   useEffect(() => {
     if (!matchId) return;
     const supabase = createClient();
     supabase
       .from("matches")
-      .select(
-        "*, auto:autos(*), comprador:usuarios!matches_comprador_id_fkey(nombre, telefono)",
-      )
+      .select("*, auto:autos(*)")
       .eq("id", matchId)
       .single()
-      .then(({ data }) => {
-        setMatch(data);
-        setLoading(false);
-      });
+      .then(({ data }) => setAuto(data?.auto));
   }, [matchId]);
 
-  async function confirmarVenta() {
-    setProcesando(true);
-    setError("");
-    try {
-      const res = await fetch("/api/cobros", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ match_id: matchId }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Error al procesar");
-
-      if (data.payment_url) {
-        // Khipu activo — redirigir al pago real
-        window.location.href = data.payment_url;
-      } else {
-        // Modo simulado
-        setExito(true);
-      }
-    } catch (e: any) {
-      setError(e.message);
-      setProcesando(false);
-    }
+  function copiar(texto: string, campo: string) {
+    navigator.clipboard.writeText(texto);
+    setCopiado(campo);
+    setTimeout(() => setCopiado(""), 2000);
   }
 
-  if (loading)
-    return (
-      <div className="max-w-lg mx-auto space-y-3">
-        {[...Array(3)].map((_, i) => (
-          <div
-            key={i}
-            className="h-16 bg-trato-gray1 rounded-xl animate-pulse"
-          />
-        ))}
-      </div>
-    );
+  async function confirmarVenta() {
+    if (!matchId) return;
+    setLoading(true);
+    const supabase = createClient();
+    await supabase
+      .from("matches")
+      .update({ estado: "cerrado" })
+      .eq("id", matchId);
+    await supabase
+      .from("autos")
+      .update({ estado: "vendido" })
+      .eq("id", auto?.id);
+    setPaso("confirmado");
+    setLoading(false);
+  }
 
-  if (!match)
+  if (paso === "confirmado")
     return (
       <div className="max-w-lg mx-auto text-center py-16">
-        <p className="text-trato-text2">Match no encontrado.</p>
-      </div>
-    );
-
-  if (exito)
-    return (
-      <div className="max-w-lg mx-auto">
-        <div className="text-center py-12">
-          <div
-            className="w-16 h-16 rounded-full bg-trato-green flex items-center
-          justify-center mx-auto mb-6"
-          >
-            <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-              <path
-                d="M4 14l7 7L24 7"
-                stroke="white"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </div>
-          <h1 className="text-2xl font-bold text-trato-text mb-2">
-            Venta confirmada
-          </h1>
-          <p className="text-trato-text2 text-sm mb-8">
-            Fee de $100.000 procesado correctamente.
-          </p>
-
-          <div
-            className="bg-trato-green-bg border border-trato-green/20
-          rounded-xl p-5 text-left mb-6"
-          >
-            <p className="text-trato-green font-medium text-sm mb-3">
-              Siguiente paso — Transferencia digital
-            </p>
-            <p className="text-trato-green/80 text-xs leading-relaxed mb-4">
-              Completa la transferencia del auto a nombre del comprador a traves
-              de Autofact. Es 100% online y tarda 15-25 dias habiles.
-            </p>
-            <a
-              href="https://www.autofact.cl/transferencias"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-block bg-trato-green text-white text-sm
-              font-medium px-5 py-2.5 rounded-[9px] hover:bg-trato-green-l
-              transition-colors"
-            >
-              Ir a Autofact para la transferencia →
-            </a>
-          </div>
-
-          <button
-            onClick={() => router.push("/matches")}
-            className="btn-secondary"
-          >
-            Volver a mis matches
-          </button>
+        <div
+          className="w-16 h-16 rounded-full bg-trato-green flex items-center
+        justify-center mx-auto mb-6"
+        >
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+            <path
+              d="M4 14l7 7L24 7"
+              stroke="white"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
         </div>
+        <h2 className="text-2xl font-bold text-trato-text mb-2">
+          Venta confirmada
+        </h2>
+        <p className="text-trato-text2 text-sm mb-8">
+          Hemos registrado el pago y marcado el auto como vendido. Ahora puedes
+          proceder con la transferencia del vehiculo.
+        </p>
+        <div
+          className="bg-trato-green-bg border border-trato-green/20
+        rounded-xl p-4 mb-6 text-left"
+        >
+          <p className="text-trato-green font-medium text-sm mb-1">
+            Siguiente paso — Transferencia del vehiculo
+          </p>
+          <p className="text-trato-green/80 text-xs leading-relaxed">
+            Coordina la transferencia del vehiculo con el comprador. Puedes
+            hacerlo a traves de Autofact o del Registro Civil.
+          </p>
+          <a
+            href="https://www.autofact.cl/transferencia-digital"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block mt-3 bg-trato-green text-white text-xs
+            px-4 py-2 rounded-lg font-medium hover:bg-trato-green-l transition-colors"
+          >
+            Ir a Autofact →
+          </a>
+        </div>
+        <Link
+          href="/matches"
+          className="text-trato-green text-sm hover:underline"
+        >
+          Volver a mis matches
+        </Link>
       </div>
     );
-
-  const auto = match.auto;
-  const comprador = match.comprador;
 
   return (
     <div className="max-w-lg mx-auto">
@@ -144,91 +120,131 @@ export default function ConfirmarVentaPage() {
           Confirmar venta
         </h1>
         <p className="text-trato-text2 text-sm mt-1">
-          Al confirmar, se cobrara el fee de $100.000 y el auto quedara marcado
-          como vendido.
+          Sigue estos pasos para completar la venta
         </p>
       </div>
 
-      {/* Resumen del match */}
-      <div className="card-trato mb-4">
-        <p className="section-label">Resumen de la operacion</p>
-        <div className="space-y-2 mt-2">
-          {[
-            ["Auto", `${auto?.marca} ${auto?.modelo} ${auto?.anio}`],
-            ["Precio", formatCLP(auto?.precio_pedido || 0)],
-            ["Kilometraje", `${Number(auto?.km).toLocaleString("es-CL")} km`],
-            ["Comprador", comprador?.nombre || "Comprador"],
-            ["Telefono", comprador?.telefono || "No registrado"],
-          ].map(([lbl, val]) => (
-            <div key={lbl} className="flex justify-between text-sm">
-              <span className="text-trato-text2">{lbl}</span>
-              <span className="font-medium text-trato-text">{val}</span>
-            </div>
-          ))}
+      {/* Auto */}
+      {auto && (
+        <div className="card-trato mb-5">
+          <p className="section-label mb-2">Auto en venta</p>
+          <p className="font-semibold text-trato-text">
+            {auto.marca} {auto.modelo} {auto.anio}
+          </p>
+          <p className="text-trato-text2 text-xs mt-0.5">
+            {Number(auto.km).toLocaleString("es-CL")} km · {auto.region}
+          </p>
         </div>
-      </div>
-
-      {/* Fee */}
-      <div className="bg-trato-dark rounded-xl p-4 mb-6">
-        <div className="flex justify-between items-center">
-          <div>
-            <p className="text-white font-medium text-sm">Fee Trato.cl</p>
-            <p className="text-trato-gray3 text-xs mt-0.5">
-              Servicio de intermediacion digital
-            </p>
-          </div>
-          <p className="text-trato-green-l font-bold text-xl">$100.000</p>
-        </div>
-      </div>
-
-      {/* Pasos siguientes */}
-      <div className="bg-trato-gray1 rounded-xl p-4 mb-6">
-        <p className="text-trato-text font-medium text-sm mb-3">
-          Que pasa despues
-        </p>
-        <div className="space-y-2">
-          {[
-            "Se cobra el fee de $100.000",
-            "El auto queda marcado como vendido en Trato",
-            "Se habilita el link a Autofact para la transferencia digital",
-            "Ambas partes completan el tramite online con firma digital",
-          ].map((paso, i) => (
-            <div
-              key={i}
-              className="flex items-start gap-2 text-xs text-trato-text2"
-            >
-              <div
-                className="w-4 h-4 rounded-full bg-trato-green flex items-center
-                justify-center flex-shrink-0 mt-0.5"
-              >
-                <span className="text-white text-[9px] font-bold">{i + 1}</span>
-              </div>
-              {paso}
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {error && (
-        <p
-          className="text-trato-danger text-xs bg-red-50 border
-          border-trato-danger/20 rounded-lg px-3 py-2 mb-4"
-        >
-          {error}
-        </p>
       )}
 
-      <button
-        onClick={confirmarVenta}
-        disabled={procesando}
-        className="btn-primary"
-      >
-        {procesando ? "Procesando..." : "Confirmar venta y pagar fee"}
-      </button>
+      {/* Paso 1 — Pago del fee */}
+      <div className="card-trato mb-4">
+        <div className="flex items-center gap-3 mb-4">
+          <div
+            className="w-7 h-7 rounded-full bg-trato-green text-white text-xs
+            font-bold flex items-center justify-center flex-shrink-0"
+          >
+            1
+          </div>
+          <div>
+            <p className="font-semibold text-trato-text text-sm">
+              Paga el fee de cierre
+            </p>
+            <p className="text-trato-text2 text-xs">
+              Transfiere $100.000 a la cuenta de TratOnline
+            </p>
+          </div>
+        </div>
 
-      <button onClick={() => router.back()} className="btn-secondary mt-3">
-        Volver
-      </button>
+        <div className="bg-trato-dark rounded-xl p-4 space-y-3">
+          <p className="text-trato-green text-xs font-medium mb-2">
+            Datos de transferencia
+          </p>
+          {[
+            { label: "Titular", value: CUENTA_PAGO.titular },
+            { label: "Banco", value: CUENTA_PAGO.banco },
+            { label: "Tipo", value: CUENTA_PAGO.tipo },
+            { label: "N° cuenta", value: CUENTA_PAGO.numero },
+            { label: "RUT", value: CUENTA_PAGO.rut },
+            { label: "Email", value: CUENTA_PAGO.email },
+            { label: "Monto", value: "$100.000" },
+          ].map(({ label, value }) => (
+            <div key={label} className="flex items-center justify-between">
+              <div>
+                <p className="text-trato-gray3 text-[10px]">{label}</p>
+                <p className="text-white text-sm font-medium">{value}</p>
+              </div>
+              <button
+                onClick={() => copiar(value, label)}
+                className="text-trato-green text-[10px] border border-trato-green/30
+                  px-2 py-1 rounded-lg hover:bg-trato-green/10 transition-colors"
+              >
+                {copiado === label ? "✓ Copiado" : "Copiar"}
+              </button>
+            </div>
+          ))}
+        </div>
+
+        <div
+          className="mt-3 bg-trato-green-bg border border-trato-green/20
+          rounded-lg p-3"
+        >
+          <p className="text-trato-green text-xs">
+            Agrega en el comentario de la transferencia tu nombre y el auto que
+            vendiste. Envía el comprobante a{" "}
+            <strong>soporte@tratonline.cl</strong>
+          </p>
+        </div>
+      </div>
+
+      {/* Paso 2 — Confirmar */}
+      <div className="card-trato mb-6">
+        <div className="flex items-center gap-3 mb-3">
+          <div
+            className="w-7 h-7 rounded-full bg-trato-green text-white text-xs
+            font-bold flex items-center justify-center flex-shrink-0"
+          >
+            2
+          </div>
+          <div>
+            <p className="font-semibold text-trato-text text-sm">
+              Confirma la venta en la plataforma
+            </p>
+            <p className="text-trato-text2 text-xs">
+              Una vez realizada la transferencia haz click en confirmar
+            </p>
+          </div>
+        </div>
+
+        <button
+          onClick={confirmarVenta}
+          disabled={loading}
+          className="btn-primary"
+        >
+          {loading ? "Confirmando..." : "Ya transferi — Confirmar venta"}
+        </button>
+      </div>
+
+      {/* Paso 3 — Transferencia vehiculo */}
+      <div className="card-trato opacity-60">
+        <div className="flex items-center gap-3">
+          <div
+            className="w-7 h-7 rounded-full bg-trato-border text-trato-text2
+            text-xs font-bold flex items-center justify-center flex-shrink-0"
+          >
+            3
+          </div>
+          <div>
+            <p className="font-semibold text-trato-text text-sm">
+              Transfiere el vehiculo
+            </p>
+            <p className="text-trato-text2 text-xs">
+              Coordina la transferencia del vehiculo con el comprador via
+              Autofact
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

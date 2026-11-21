@@ -11,6 +11,7 @@ export default function LandingPage() {
           <Link href="/registro" className="bg-trato-green text-white text-sm px-4 py-2 rounded-lg font-medium hover:bg-trato-green-l transition-colors">Crear cuenta gratis</Link>
         </div>
       </nav>
+
       <section className="max-w-4xl mx-auto px-4 pt-16 pb-20 text-center">
         <div className="inline-flex items-center gap-2 bg-trato-green/10 border border-trato-green/20 rounded-full px-4 py-1.5 mb-6">
           <div className="w-2 h-2 rounded-full bg-trato-green animate-pulse" />
@@ -25,7 +26,7 @@ export default function LandingPage() {
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center mb-12">
           <Link href="/registro" className="bg-trato-green text-white px-8 py-3.5 rounded-[10px] font-semibold text-sm hover:bg-trato-green-l transition-colors">Publicar mi auto gratis</Link>
-          <Link href="/registro" className="bg-trato-steel/30 text-white px-8 py-3.5 rounded-[10px] font-semibold text-sm border border-trato-steel/50 hover:bg-trato-steel/50 transition-colors">Buscar un auto</Link>
+          <Link href="/inspeccion" className="bg-trato-steel/30 text-white px-8 py-3.5 rounded-[10px] font-semibold text-sm border border-trato-steel/50 hover:bg-trato-steel/50 transition-colors">Inspeccionar un auto</Link>
         </div>
         <div className="grid grid-cols-3 gap-4 max-w-sm mx-auto">
           <div className="text-center">
@@ -42,6 +43,7 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
       <section className="bg-trato-mid border-t border-trato-steel/30 py-16">
         <div className="max-w-4xl mx-auto px-4">
           <h2 className="text-2xl font-bold text-white text-center mb-2">Como funciona</h2>
@@ -68,42 +70,74 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
       <section className="py-16 max-w-4xl mx-auto px-4">
-        <h2 className="text-2xl font-bold text-white text-center mb-10">Una plataforma, tres roles</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="bg-trato-mid border border-trato-steel/40 rounded-2xl p-6">
-            <div className="text-3xl mb-3">🚗</div>
-            <h3 className="text-white font-semibold mb-2">Vendedor</h3>
-            <p className="text-trato-gray3 text-sm leading-relaxed mb-4">Publica tu auto gratis y recibe matches con compradores reales. Solo pagas si vendes.</p>
-            <Link href="/registro" className="text-trato-green-l text-sm font-medium hover:underline">Publicar mi auto</Link>
+        <div className="bg-trato-mid border border-trato-amber/20 rounded-2xl p-8 text-center mb-6">
+          <div className="text-4xl mb-3">🔧</div>
+          <h2 className="text-2xl font-bold text-white mb-2">Inspeccion precompra</h2>
+          <p className="text-trato-gray3 text-sm leading-relaxed max-w-lg mx-auto mb-2">
+            3 de cada 4 autos usados en Chile presentan fallas ocultas al momento de la compra.
+            Nuestros mecanicos certificados inspeccionan cualquier auto — aunque no este publicado en TratOnline.
+          </p>
+          <div className="grid grid-cols-3 gap-4 max-w-sm mx-auto my-6">
+            <div className="text-center">
+              <p className="text-trato-green-l text-xl font-bold">$34.990</p>
+              <p className="text-trato-gray3 text-xs mt-0.5">Plan basico</p>
+            </div>
+            <div className="text-center">
+              <p className="text-trato-green-l text-xl font-bold">$49.990</p>
+              <p className="text-trato-gray3 text-xs mt-0.5">Plan completo</p>
+            </div>
+            <div className="text-center">
+              <p className="text-trato-green-l text-xl font-bold">$64.990</p>
+              <p className="text-trato-gray3 text-xs mt-0.5">Urgente</p>
+            </div>
           </div>
-          <div className="bg-trato-mid border border-trato-steel/40 rounded-2xl p-6">
-            <div className="text-3xl mb-3">🔍</div>
-            <h3 className="text-white font-semibold mb-2">Comprador</h3>
-            <p className="text-trato-gray3 text-sm leading-relaxed mb-4">Define que buscas y te avisamos apenas aparezca un auto compatible. Sin perder tiempo.</p>
-            <Link href="/registro" className="text-trato-green-l text-sm font-medium hover:underline">Buscar mi auto</Link>
-          </div>
-          <div className="bg-trato-mid border border-trato-steel/40 rounded-2xl p-6">
-            <div className="text-3xl mb-3">🔧</div>
-            <h3 className="text-white font-semibold mb-2">Mecanico</h3>
-            <p className="text-trato-gray3 text-sm leading-relaxed mb-4">Ofrece inspecciones pre-compra en tu zona. Accede a clientes que necesitan tu servicio.</p>
-            <Link href="/registro" className="text-trato-green-l text-sm font-medium hover:underline">Registrarme</Link>
-          </div>
+          <Link href="/inspeccion" className="inline-block bg-trato-green text-white px-8 py-3 rounded-[10px] font-semibold text-sm hover:bg-trato-green-l transition-colors">
+            Solicitar inspeccion →
+          </Link>
         </div>
       </section>
+
       <section className="bg-trato-mid border-t border-trato-steel/30 py-16">
-        <div className="max-w-2xl mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold text-white mb-3">Listo para hacer el trato</h2>
-          <p className="text-trato-gray3 mb-8">Unete a la plataforma que conecta vendedores y compradores de autos en Chile de forma inteligente.</p>
-          <Link href="/registro" className="inline-block bg-trato-green text-white px-10 py-4 rounded-[10px] font-semibold hover:bg-trato-green-l transition-colors">Crear cuenta gratis</Link>
+        <div className="max-w-4xl mx-auto px-4">
+          <h2 className="text-2xl font-bold text-white text-center mb-10">Una plataforma, tres roles</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="bg-trato-dark border border-trato-steel/40 rounded-2xl p-6">
+              <div className="text-3xl mb-3">🚗</div>
+              <h3 className="text-white font-semibold mb-2">Vendedor</h3>
+              <p className="text-trato-gray3 text-sm leading-relaxed mb-4">Publica tu auto gratis y recibe matches con compradores reales. Solo pagas si vendes.</p>
+              <Link href="/registro" className="text-trato-green-l text-sm font-medium hover:underline">Publicar mi auto</Link>
+            </div>
+            <div className="bg-trato-dark border border-trato-steel/40 rounded-2xl p-6">
+              <div className="text-3xl mb-3">🔍</div>
+              <h3 className="text-white font-semibold mb-2">Comprador</h3>
+              <p className="text-trato-gray3 text-sm leading-relaxed mb-4">Define que buscas y te avisamos apenas aparezca un auto compatible. Sin perder tiempo.</p>
+              <Link href="/registro" className="text-trato-green-l text-sm font-medium hover:underline">Buscar mi auto</Link>
+            </div>
+            <div className="bg-trato-dark border border-trato-steel/40 rounded-2xl p-6">
+              <div className="text-3xl mb-3">🔧</div>
+              <h3 className="text-white font-semibold mb-2">Mecanico</h3>
+              <p className="text-trato-gray3 text-sm leading-relaxed mb-4">Ofrece inspecciones pre-compra en tu zona. Accede a clientes que necesitan tu servicio.</p>
+              <Link href="/registro" className="text-trato-green-l text-sm font-medium hover:underline">Registrarme</Link>
+            </div>
+          </div>
         </div>
       </section>
+
+      <section className="py-16 max-w-2xl mx-auto px-4 text-center">
+        <h2 className="text-3xl font-bold text-white mb-3">Listo para hacer el trato</h2>
+        <p className="text-trato-gray3 mb-8">Unete a la plataforma que conecta vendedores y compradores de autos en Chile de forma inteligente.</p>
+        <Link href="/registro" className="inline-block bg-trato-green text-white px-10 py-4 rounded-[10px] font-semibold hover:bg-trato-green-l transition-colors">Crear cuenta gratis</Link>
+      </section>
+
       <footer className="border-t border-trato-steel/30 py-8">
         <div className="max-w-5xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
           <Image src="/logo.svg" alt="TratOnline" width={120} height={30} />
           <div className="flex gap-6 text-trato-gray3 text-xs">
             <Link href="/registro" className="hover:text-white transition-colors">Registrarse</Link>
             <Link href="/login" className="hover:text-white transition-colors">Ingresar</Link>
+            <Link href="/inspeccion" className="hover:text-white transition-colors">Inspecciones</Link>
             <a href="mailto:soporte@tratonline.cl" className="hover:text-white transition-colors">soporte@tratonline.cl</a>
           </div>
           <div className="flex items-center gap-4">

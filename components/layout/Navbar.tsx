@@ -16,6 +16,7 @@ interface NavbarProps {
 const NAV_LINKS: Record<UserRole, { href: string; label: string }[]> = {
   vendedor: [
     { href: "/publicar", label: "Publicar auto" },
+    { href: "/mis-autos", label: "Mis autos" },
     { href: "/explorar", label: "Explorar" },
     { href: "/matches", label: "Mis matches" },
   ],
