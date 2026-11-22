@@ -1,4 +1,3 @@
-$landing = @'
 import Link from "next/link"
 import Image from "next/image"
 
@@ -158,6 +157,3 @@ export default function LandingPage() {
     </div>
   )
 }
-'@
-[System.IO.File]::WriteAllText("$PWD\app\page.tsx", $landing, [System.Text.UTF8Encoding]::new($false))
-Write-Host "ok"
