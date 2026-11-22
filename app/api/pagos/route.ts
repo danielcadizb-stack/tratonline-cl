@@ -1,116 +1,103 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createServerClientInstance } from "@/lib/supabase-server";
+import { NextResponse } from "next/server"
+import { createServerClientInstance } from "@/lib/supabase-server"
 
-export async function POST(req: NextRequest) {
-  const supabase = await createServerClientInstance();
-  const body = await req.json();
-
-  const { error, data } = await supabase
-    .from("pagos")
-    .insert({
-      tipo: body.tipo,
-      monto: body.monto,
-      nombre_cliente: body.nombre_cliente,
-      email_cliente: body.email_cliente,
-      telefono: body.telefono,
-      detalle: body.detalle,
-      match_id: body.match_id || null,
-      mecanico_id: body.mecanico_id || null,
-      estado: "pendiente",
-    })
-    .select()
-    .single();
-
-  if (error)
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ ok: true, pago: data });
-}
+const ADMIN_EMAIL = "daniel.cadiz.b@gmail.com"
 
 export async function GET() {
-  const supabase = await createServerClientInstance();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user)
-    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
-
-  const { data: usuario } = await supabase
-    .from("usuarios")
-    .select("email")
-    .eq("id", user.id)
-    .single();
-
-  if (usuario?.email !== "daniel.cadiz.b@gmail.com")
-    return NextResponse.json({ error: "No autorizado" }, { status: 403 });
+  const supabase = await createServerClientInstance()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user || user.email !== ADMIN_EMAIL)
+    return NextResponse.json({ error: "No autorizado" }, { status: 401 })
 
   const { data: pagos } = await supabase
     .from("pagos")
     .select("*")
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
 
-  return NextResponse.json({ pagos: pagos || [] });
+  return NextResponse.json({ pagos: pagos || [] })
 }
 
-export async function PATCH(req: NextRequest) {
-  const supabase = await createServerClientInstance();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user)
-    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+export async function POST(req: Request) {
+  const supabase = await createServerClientInstance()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user || user.email !== ADMIN_EMAIL)
+    return NextResponse.json({ error: "No autorizado" }, { status: 401 })
 
-  const { data: usuario } = await supabase
-    .from("usuarios")
-    .select("email")
-    .eq("id", user.id)
-    .single();
+  const body = await req.json()
+  const { data, error } = await supabase.from("pagos").insert({
+    tipo: body.tipo,
+    monto: body.monto,
+    nombre_cliente: body.nombre_cliente,
+    email_cliente: body.email_cliente,
+    telefono: body.telefono,
+    detalle: body.detalle,
+    comprobante_ref: body.comprobante_ref,
+    estado: "pendiente",
+  }).select().single()
 
-  if (usuario?.email !== "daniel.cadiz.b@gmail.com")
-    return NextResponse.json({ error: "No autorizado" }, { status: 403 });
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  return NextResponse.json({ pago: data })
+}
 
-  const body = await req.json();
-  const { id, estado, notas } = body;
+export async function PATCH(req: Request) {
+  const supabase = await createServerClientInstance()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user || user.email !== ADMIN_EMAIL)
+    return NextResponse.json({ error: "No autorizado" }, { status: 401 })
 
-  const { error } = await supabase
+  const body = await req.json()
+  const { id, estado, notas, mecanico_id, match_id } = body
+
+  const { data: pago, error } = await supabase
     .from("pagos")
     .update({
       estado,
       notas,
       verificado_at: estado === "verificado" ? new Date().toISOString() : null,
     })
-    .eq("id", id);
+    .eq("id", id)
+    .select()
+    .single()
 
-  if (error)
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  // Si es fee de venta verificado, activar match como cerrado
-  if (estado === "verificado") {
-    const { data: pago } = await supabase
-      .from("pagos")
-      .select("tipo, match_id, mecanico_id")
-      .eq("id", id)
-      .single();
+  if (estado === "verificado" && pago.tipo === "membresia" && mecanico_id) {
+    const ahora = new Date()
+    const vence = new Date(ahora)
+    vence.setDate(vence.getDate() + 30)
 
-    if (pago?.tipo === "fee_venta" && pago?.match_id) {
+    const { data: suscActual } = await supabase
+      .from("suscripciones_mecanicos")
+      .select("*")
+      .eq("mecanico_id", mecanico_id)
+      .eq("estado", "activa")
+      .single()
+
+    if (suscActual) {
+      const nuevaBase = new Date(suscActual.vence_el)
+      const nuevaVence = new Date(nuevaBase)
+      nuevaVence.setDate(nuevaVence.getDate() + 30)
       await supabase
-        .from("matches")
-        .update({ estado: "cerrado" })
-        .eq("id", pago.match_id);
-    }
-
-    if (pago?.tipo === "membresia" && pago?.mecanico_id) {
-      const vence = new Date(
-        Date.now() + 30 * 24 * 60 * 60 * 1000,
-      ).toISOString();
-      await supabase
-        .from("mecanicos")
-        .update({
-          suscripcion_activa: true,
-          suscripcion_vence: vence,
-        })
-        .eq("id", pago.mecanico_id);
+        .from("suscripciones_mecanicos")
+        .update({ vence_el: nuevaVence.toISOString() })
+        .eq("id", suscActual.id)
+    } else {
+      await supabase.from("suscripciones_mecanicos").insert({
+        mecanico_id,
+        activa_desde: ahora.toISOString(),
+        vence_el: vence.toISOString(),
+        estado: "activa",
+        pago_id: id,
+      })
     }
   }
 
-  return NextResponse.json({ ok: true });
+  if (estado === "verificado" && pago.tipo === "fee_venta" && match_id) {
+    await supabase
+      .from("matches")
+      .update({ estado: "cerrado" })
+      .eq("id", match_id)
+  }
+
+  return NextResponse.json({ pago })
 }
