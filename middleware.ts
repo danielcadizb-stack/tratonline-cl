@@ -26,9 +26,9 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
   const pathname = request.nextUrl.pathname;
 
-  const publicRoutes = ["/", "/login", "/registro"];
+  const publicRoutes = ["/", "/login", "/registro", "/terminos", "/inspeccion"];
   const isPublic =
-    publicRoutes.some((r) => pathname === r) ||
+    publicRoutes.some((r) => pathname === r || pathname.startsWith(r + "/")) ||
     pathname.startsWith("/_next") ||
     pathname.startsWith("/api/public") ||
     pathname.match(/\.(ico|png|jpg|svg|css|js)$/);
